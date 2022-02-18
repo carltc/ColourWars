@@ -19,11 +19,12 @@ public:
 
 	virtual void CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult) override;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
+		class AColourWarsBlock* SelectedBlock;
+
 protected:
 	void OnResetVR();
 	void TriggerClick();
 	void TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers);
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
-	class AColourWarsBlock* CurrentBlockFocus;
 };

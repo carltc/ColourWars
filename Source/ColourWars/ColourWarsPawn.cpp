@@ -61,15 +61,15 @@ void AColourWarsPawn::OnResetVR()
 
 void AColourWarsPawn::TriggerClick()
 {
-	if (CurrentBlockFocus)
+	/*if (SelectedBlock)
 	{
-		CurrentBlockFocus->HandleClicked();
-	}
+		SelectedBlock->HandleClicked();
+	}*/
 }
 
 void AColourWarsPawn::TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers)
 {
-	FHitResult HitResult;
+	/*FHitResult HitResult;
 	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
 	if (bDrawDebugHelpers)
 	{
@@ -79,22 +79,17 @@ void AColourWarsPawn::TraceForBlock(const FVector& Start, const FVector& End, bo
 	if (HitResult.Actor.IsValid())
 	{
 		AColourWarsBlock* HitBlock = Cast<AColourWarsBlock>(HitResult.Actor.Get());
-		if (CurrentBlockFocus != HitBlock)
+		if (SelectedBlock != HitBlock)
 		{
-			if (CurrentBlockFocus)
-			{
-				CurrentBlockFocus->Highlight(false);
-			}
-			if (HitBlock)
-			{
-				HitBlock->Highlight(true);
-			}
-			CurrentBlockFocus = HitBlock;
+			SelectedBlock = HitBlock;
 		}
-	}
-	else if (CurrentBlockFocus)
+		else
+		{
+
+		}
+	}*/
+	/*else if (CurrentBlockFocus)
 	{
-		CurrentBlockFocus->Highlight(false);
 		CurrentBlockFocus = nullptr;
-	}
+	}*/
 }

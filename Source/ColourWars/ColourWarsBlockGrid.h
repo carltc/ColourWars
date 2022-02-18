@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ColourWarsBlock.h"
 #include "ColourWarsBlockGrid.generated.h"
 
 /** Class used to spawn blocks and manage score */
@@ -34,6 +35,15 @@ public:
 	UPROPERTY(Category=Grid, EditAnywhere, BlueprintReadOnly)
 	float BlockSpacing;
 
+	/** Pointer to player pawn */
+	UPROPERTY()
+		class AColourWarsPawn* PlayerPawn;
+
+private:
+	/** Array of all blocks in grid */
+	TArray<AColourWarsBlock*> Blocks;
+
+
 protected:
 	// Begin AActor interface
 	virtual void BeginPlay() override;
@@ -43,6 +53,12 @@ public:
 
 	/** Handle the block being clicked */
 	void AddScore();
+
+	/** Handle the block being clicked */
+	void DeselectAllOtherBlocks();
+	
+	/** Handle the block being clicked */
+	void SpawnNewBlock(AColourWarsBlock::eBlockType BlockType, FVector Location);
 
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }
