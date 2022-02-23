@@ -3,6 +3,7 @@
 #include "ColourWarsBlockGrid.h"
 #include "ColourWarsBlock.h"
 #include "ColourWarsPawn.h"
+#include "ColourWarsGameMode.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
@@ -11,6 +12,17 @@
 
 AColourWarsBlockGrid::AColourWarsBlockGrid()
 {
+	// Structure to hold one-time initialization
+	struct FConstructorStatics
+	{
+		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
+		FConstructorStatics()
+			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
+		{
+		}
+	};
+	static FConstructorStatics ConstructorStatics;
+
 	// Create dummy root scene component
 	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
 	RootComponent = DummyRoot;
@@ -25,6 +37,13 @@ AColourWarsBlockGrid::AColourWarsBlockGrid()
 	ScoreText->SetRelativeRotation(FRotator(90.f,0.f,0.f));
 	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Score: {0}"), FText::AsNumber(0)));
 	ScoreText->SetupAttachment(DummyRoot);
+
+	// Create static mesh component
+	PlayerTurnMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlayerTurnMesh0"));
+	PlayerTurnMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
+	PlayerTurnMesh->SetRelativeScale3D(FVector(1.f, 6.f, 0.2f));
+	PlayerTurnMesh->SetRelativeLocation(FVector(-911.f, 0.f, 0.f));
+	PlayerTurnMesh->SetupAttachment(DummyRoot);
 }
 
 
@@ -34,6 +53,13 @@ void AColourWarsBlockGrid::BeginPlay()
 
 	// Set the player pawn
 	PlayerPawn = Cast<AColourWarsPawn>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+
+	// Set the gamemode
+	GameMode = Cast<AColourWarsGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	GameMode->GameGrid = this;
+
+	// Set the playerturn mesh to the starting player colour
+	PlayerTurnMesh->SetMaterial(0, GameMode->RedMaterial);
 
 	// Number of blocks
 	const int32 NumBlocks = Size * Size;

@@ -21,6 +21,7 @@ class AColourWarsBlockGrid : public AActor
 	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UTextRenderComponent* ScoreText;
 
+
 public:
 	AColourWarsBlockGrid();
 
@@ -38,6 +39,14 @@ public:
 	/** Pointer to player pawn */
 	UPROPERTY()
 		class AColourWarsPawn* PlayerPawn;
+
+	/** Pointer to game mode */
+	UPROPERTY()
+		class AColourWarsGameMode* GameMode;
+
+	/** StaticMesh component for the clickable block */
+	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		class UStaticMeshComponent* PlayerTurnMesh;
 
 private:
 	/** Array of all blocks in grid */

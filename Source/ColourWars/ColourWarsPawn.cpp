@@ -16,27 +16,12 @@ AColourWarsPawn::AColourWarsPawn(const FObjectInitializer& ObjectInitializer)
 
 void AColourWarsPawn::Tick(float DeltaSeconds)
 {
-	Super::Tick(DeltaSeconds);
+	/*Super::Tick(DeltaSeconds);
 
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
-		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-		{
-			if (UCameraComponent* OurCamera = PC->GetViewTarget()->FindComponentByClass<UCameraComponent>())
-			{
-				FVector Start = OurCamera->GetComponentLocation();
-				FVector End = Start + (OurCamera->GetComponentRotation().Vector() * 8000.0f);
-				TraceForBlock(Start, End, true);
-			}
-		}
-		else
-		{
-			FVector Start, Dir, End;
-			PC->DeprojectMousePositionToWorld(Start, Dir);
-			End = Start + (Dir * 8000.0f);
-			TraceForBlock(Start, End, false);
-		}
-	}
+
+	}*/
 }
 
 void AColourWarsPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

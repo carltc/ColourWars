@@ -2,6 +2,7 @@
 
 #include "ColourWarsBlock.h"
 #include "ColourWarsBlockGrid.h"
+#include "ColourWarsGameMode.h"
 #include "ColourWarsPawn.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/StaticMeshComponent.h"
@@ -19,18 +20,8 @@ AColourWarsBlock::AColourWarsBlock()
 	struct FConstructorStatics
 	{
 		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
-		ConstructorHelpers::FObjectFinderOptional<UMaterial> BaseMaterial;
-		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> RedMaterial;
-		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> GreenMaterial;
-		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> BlueMaterial;
-		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> OrangeMaterial;
 		FConstructorStatics()
 			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
-			, BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
-			, RedMaterial(TEXT("/Game/Puzzle/Meshes/RedMaterial.RedMaterial"))
-			, GreenMaterial(TEXT("/Game/Puzzle/Meshes/GreenMaterial.GreenMaterial"))
-			, BlueMaterial(TEXT("/Game/Puzzle/Meshes/BlueMaterial.BlueMaterial"))
-			, OrangeMaterial(TEXT("/Game/Puzzle/Meshes/OrangeMaterial.OrangeMaterial"))
 		{
 		}
 	};
@@ -41,6 +32,9 @@ AColourWarsBlock::AColourWarsBlock()
 
 	// Set the player pawn
 	PlayerPawn = Cast<AColourWarsPawn>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+	
+	// Set the gamemode
+	GameMode = Cast<AColourWarsGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 
 	// Create dummy root scene component
 	DummyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy0"));
@@ -51,7 +45,6 @@ AColourWarsBlock::AColourWarsBlock()
 	BlockMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());
 	BlockMesh->SetRelativeScale3D(FVector(1.f,1.f,0.25f));
 	BlockMesh->SetRelativeLocation(FVector(0.f,0.f,25.f));
-	BlockMesh->SetMaterial(0, ConstructorStatics.BlueMaterial.Get());
 	BlockMesh->SetupAttachment(DummyRoot);
 	BlockMesh->OnClicked.AddDynamic(this, &AColourWarsBlock::BlockClicked);
 	BlockMesh->OnInputTouchBegin.AddDynamic(this, &AColourWarsBlock::OnFingerPressedBlock);
@@ -66,37 +59,17 @@ AColourWarsBlock::AColourWarsBlock()
 	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "{0}"), FText::AsNumber(Score)));
 	ScoreText->SetupAttachment(DummyRoot);
 
-	// Save a pointer to the orange material
-	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
-	RedMaterial = ConstructorStatics.RedMaterial.Get();
-	GreenMaterial = ConstructorStatics.GreenMaterial.Get();
-	BlueMaterial = ConstructorStatics.BlueMaterial.Get();
-	OrangeMaterial = ConstructorStatics.OrangeMaterial.Get();
-
 	// Setup the collision meshes
 	NeighbourCheck_CollisionBox = CreateDefaultSubobject<UBoxComponent>(FName("Neighbour Checker Collision Box"));
 	NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
 	NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
 	NeighbourCheck_CollisionBox->SetBoxExtent(FVector(100.f, 100.f, 100.f));
 	NeighbourCheck_CollisionBox->SetupAttachment(DummyRoot);
-	NeighbourCheck_CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &AColourWarsBlock::OnOverlapBegin);
-	NeighbourCheck_CollisionBox->OnComponentEndOverlap.AddDynamic(this, &AColourWarsBlock::OnOverlapEnd);
 }
 
 void AColourWarsBlock::SetBlockMaterial()
 {
-	switch (BlockType)
-	{
-		case eBlockType::Red:
-			BlockMesh->SetMaterial(0, RedMaterial);
-			break;
-		case eBlockType::Green:
-			BlockMesh->SetMaterial(0, GreenMaterial);
-			break;
-		case eBlockType::Blue:
-			BlockMesh->SetMaterial(0, BlueMaterial);
-			break;
-	}
+	BlockMesh->SetMaterial(0, GameMode->GetPlayerColour(BlockType));
 }
 
 void AColourWarsBlock::BlockClicked(UPrimitiveComponent* ClickedComp, FKey ButtonClicked)
@@ -108,30 +81,6 @@ void AColourWarsBlock::BlockClicked(UPrimitiveComponent* ClickedComp, FKey Butto
 void AColourWarsBlock::OnFingerPressedBlock(ETouchIndex::Type FingerIndex, UPrimitiveComponent* TouchedComponent)
 {
 	HandleClicked();
-}
-
-void AColourWarsBlock::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	AColourWarsBlock* overlapBlock = Cast<AColourWarsBlock>(OtherActor);
-
-	if (overlapBlock != nullptr)
-	{
-		// Add the block to the array of blocks
-		NeighbouringBlocks.Add(overlapBlock);
-
-	}
-}
-
-void AColourWarsBlock::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	AColourWarsBlock* overlapBlock = Cast<AColourWarsBlock>(OtherActor);
-
-	if (overlapBlock != nullptr)
-	{
-		// Remove the block to the array of blocks
-		NeighbouringBlocks.Remove(overlapBlock);
-
-	}
 }
 
 void AColourWarsBlock::HandleClicked()
@@ -160,13 +109,20 @@ void AColourWarsBlock::HandleClicked()
 					// Deselect the selected block
 					PlayerPawn->SelectedBlock->Deselect();
 
+					// Set gamemode to next player turn
+					GameMode->NextTurn();
 				}
 				return;
 			}
 		}
 
-		OwningGrid->DeselectAllOtherBlocks();
-		this->Select();
+		// If nothing selected then select this block
+		// Check if this block is the correct one for the current player
+		if (GameMode->CurrentPlayer == BlockType)
+		{
+			OwningGrid->DeselectAllOtherBlocks();
+			this->Select();
+		}
 	}
 	else
 	{
@@ -287,8 +243,6 @@ void AColourWarsBlock::Select()
 	PlayerPawn->SelectedBlock = this;
 	bIsSelected = true;
 
-	// Change material
-	//BlockMesh->SetMaterial(0, OrangeMaterial);
 	this->AddActorLocalOffset(FVector(0.f, 0.f, 100.f));
 }
 
@@ -297,8 +251,6 @@ void AColourWarsBlock::Deselect()
 	PlayerPawn->SelectedBlock = nullptr;
 	bIsSelected = false;
 
-	// Change material
-	//BlockMesh->SetMaterial(0, BlueMaterial);
 	this->SetActorLocation(GridLocation);
 }
 

@@ -68,26 +68,10 @@ public:
 	UPROPERTY()
 	class AColourWarsPawn* PlayerPawn;
 	
-	/** Pointer to white material used on the focused block */
+	/** Pointer to game mode */
 	UPROPERTY()
-	class UMaterial* BaseMaterial;
-
-	/** Pointer to red material used on inactive blocks */
-	UPROPERTY()
-	class UMaterialInstance* RedMaterial;
+	class AColourWarsGameMode* GameMode;
 	
-	/** Pointer to green material used on inactive blocks */
-	UPROPERTY()
-	class UMaterialInstance* GreenMaterial;
-	
-	/** Pointer to blue material used on inactive blocks */
-	UPROPERTY()
-	class UMaterialInstance* BlueMaterial;
-
-	/** Pointer to orange material used on active blocks */
-	UPROPERTY()
-	class UMaterialInstance* OrangeMaterial;
-
 	/** Grid that owns us */
 	UPROPERTY()
 	class AColourWarsBlockGrid* OwningGrid;
@@ -100,14 +84,6 @@ public:
 	UFUNCTION()
 	void OnFingerPressedBlock(ETouchIndex::Type FingerIndex, UPrimitiveComponent* TouchedComponent);
 	
-	// declare overlap begin function
-	UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
-	// declare overlap end function
-	UFUNCTION()
-	void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 
 	void SetBlockMaterial();
 	
