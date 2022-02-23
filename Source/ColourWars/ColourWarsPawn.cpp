@@ -44,7 +44,6 @@ void AColourWarsPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction("ResetVR", EInputEvent::IE_Pressed, this, &AColourWarsPawn::OnResetVR);
-	PlayerInputComponent->BindAction("TriggerClick", EInputEvent::IE_Pressed, this, &AColourWarsPawn::TriggerClick);
 }
 
 void AColourWarsPawn::CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult)
@@ -57,39 +56,4 @@ void AColourWarsPawn::CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutRe
 void AColourWarsPawn::OnResetVR()
 {
 	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-}
-
-void AColourWarsPawn::TriggerClick()
-{
-	/*if (SelectedBlock)
-	{
-		SelectedBlock->HandleClicked();
-	}*/
-}
-
-void AColourWarsPawn::TraceForBlock(const FVector& Start, const FVector& End, bool bDrawDebugHelpers)
-{
-	/*FHitResult HitResult;
-	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
-	if (bDrawDebugHelpers)
-	{
-		DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Red);
-		DrawDebugSolidBox(GetWorld(), HitResult.Location, FVector(20.0f), FColor::Red);
-	}
-	if (HitResult.Actor.IsValid())
-	{
-		AColourWarsBlock* HitBlock = Cast<AColourWarsBlock>(HitResult.Actor.Get());
-		if (SelectedBlock != HitBlock)
-		{
-			SelectedBlock = HitBlock;
-		}
-		else
-		{
-
-		}
-	}*/
-	/*else if (CurrentBlockFocus)
-	{
-		CurrentBlockFocus = nullptr;
-	}*/
 }

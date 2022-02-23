@@ -282,24 +282,6 @@ void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
 	ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
 }
 
-void AColourWarsBlock::Highlight(bool bOn)
-{
-	// Do not highlight if the block has already been activated.
-	/*if (bIsSelected)
-	{
-		return;
-	}
-
-	if (bOn)
-	{
-		BlockMesh->SetMaterial(0, BaseMaterial);
-	}
-	else
-	{
-		BlockMesh->SetMaterial(0, BlueMaterial);
-	}*/
-}
-
 void AColourWarsBlock::Select()
 {
 	PlayerPawn->SelectedBlock = this;

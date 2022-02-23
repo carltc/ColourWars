@@ -113,8 +113,6 @@ public:
 	
 	void HandleClicked();
 
-	void Highlight(bool bOn);
-
 	bool NeighbourCheck(AColourWarsBlock* OtherBlock, eNeighbourCheckType CheckType);
 	
 	void BonusCheck(AColourWarsBlock* ChangedBlock);
