@@ -39,7 +39,7 @@ void AColourWarsBlockGrid::BeginPlay()
 	const int32 NumBlocks = Size * Size;
 
 	// Set starting block type
-	int32 BlockTypeInt = 0;
+	int32 BlockTypeInt = 1;
 
 	// Create list to be used to randomly assign block types
 	TArray<AColourWarsBlock::eBlockType> BlockTypes;
@@ -51,9 +51,9 @@ void AColourWarsBlockGrid::BeginPlay()
 
 		// Increment the block type
 		BlockTypeInt++;
-		if (BlockTypeInt > 2)
+		if (BlockTypeInt > 3)
 		{
-			BlockTypeInt = 0;
+			BlockTypeInt = 1;
 		}
 	}
 

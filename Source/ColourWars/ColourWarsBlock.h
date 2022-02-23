@@ -25,26 +25,32 @@ class AColourWarsBlock : public AActor
 		class UTextRenderComponent* ScoreText;
 
 	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		class UBoxComponent* CollisionMeshUp;
-
-	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		class UBoxComponent* CollisionMeshDown;
-
-	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		class UBoxComponent* CollisionMeshLeft;
-
-	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		class UBoxComponent* CollisionMeshRight;
+		class UBoxComponent* NeighbourCheck_CollisionBox;
 
 public:
 	AColourWarsBlock();
 
+	// Neighbour Check Type
+	enum eNeighbourCheckType
+	{
+		Vertical,
+		Horizontal
+	};
+
 	// Block type
 	enum eBlockType
 	{
+		None,
 		Red,
 		Green,
 		Blue
+	};
+
+	// Move type
+	enum eMoveType
+	{
+		Attacking,
+		Defensive
 	};
 
 	eBlockType BlockType;
@@ -109,6 +115,10 @@ public:
 
 	void Highlight(bool bOn);
 
+	bool NeighbourCheck(AColourWarsBlock* OtherBlock, eNeighbourCheckType CheckType);
+	
+	void BonusCheck(AColourWarsBlock* ChangedBlock);
+
 	void Select();
 
 	void Deselect();
@@ -117,7 +127,7 @@ public:
 	
 	bool ValidMove(AColourWarsBlock* OtherBlock);
 	
-	void MakeMove(AColourWarsBlock* OtherBlock);
+	eMoveType MakeMove(AColourWarsBlock* OtherBlock);
 	
 	bool CanDefeat(AColourWarsBlock* DefendingBlock);
 	
