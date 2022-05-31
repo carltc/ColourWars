@@ -33,10 +33,11 @@ AColourWarsBlockGrid::AColourWarsBlockGrid()
 
 	// Create static mesh component
 	ScoreText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("ScoreText0"));
-	ScoreText->SetRelativeLocation(FVector(300.f, -200.f, -200.f));
+	ScoreText->SetRelativeLocation(FVector(0.f, 0.f, -200.f));
 	ScoreText->SetRelativeRotation(FRotator(90.f,0.f,0.f));
-	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Score: {0}"), FText::AsNumber(0)));
+	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "<Score Unset>"), FText::AsNumber(0)));
 	ScoreText->SetupAttachment(DummyRoot);
+	ScoreText->HorizontalAlignment = EHorizTextAligment::EHTA_Center;
 
 	// Create static mesh component
 	PlayerTurnMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlayerTurnMesh0"));
@@ -106,16 +107,36 @@ void AColourWarsBlockGrid::BeginPlay()
 		// Remove block type just used
 		BlockTypes.RemoveAt(RandomIndex);
 	}
+
+	this->UpdateScore();
 }
 
 
-void AColourWarsBlockGrid::AddScore()
+void AColourWarsBlockGrid::UpdateScore()
 {
-	// Increment score
-	Score++;
+	// Calculate the score of each player
+	int32 redScore = 0;
+	int32 greenScore = 0;
+	int32 blueScore = 0;
+	for (int32 BlockIndex = 0; BlockIndex < Blocks.Num(); BlockIndex++)
+	{
+		AColourWarsBlock* block = Blocks[BlockIndex];
+		switch (block->BlockType)
+		{
+			case AColourWarsBlock::eBlockType::Red:
+				redScore += block->Score;
+				break;
+			case AColourWarsBlock::eBlockType::Green:
+				greenScore += block->Score;
+				break;
+			case AColourWarsBlock::eBlockType::Blue:
+				blueScore += block->Score;
+				break;
+		}
+	}
 
 	// Update text
-	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Score: {0}"), FText::AsNumber(Score)));
+	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Red:{0} Green:{1} Blue:{2}"), FText::AsNumber(redScore), FText::AsNumber(greenScore), FText::AsNumber(blueScore)));
 }
 
 void AColourWarsBlockGrid::DeselectAllOtherBlocks()
@@ -147,6 +168,11 @@ void AColourWarsBlockGrid::SpawnNewBlock(AColourWarsBlock::eBlockType BlockType,
 
 	// Add the block to the array of blocks
 	Blocks.Add(NewBlock);
+}
+
+void AColourWarsBlockGrid::RemoveBlock(AColourWarsBlock* BlockToRemove)
+{
+	Blocks.Remove(BlockToRemove);
 }
 
 

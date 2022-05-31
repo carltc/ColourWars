@@ -130,6 +130,18 @@ void AColourWarsBlock::HandleClicked()
 	}
 }
 
+void AColourWarsBlock::IncreaseThisBlock()
+{
+	// Add 1 score as part of this move
+	this->AddScore(1);
+
+	// Deselect the selected block
+	PlayerPawn->SelectedBlock->Deselect();
+
+	// Set gamemode to next player turn
+	GameMode->NextTurn();
+}
+
 bool AColourWarsBlock::NeighbourCheck(AColourWarsBlock* OtherBlock, eNeighbourCheckType CheckType)
 {
 	TSet<AActor*> OverlappingActors;
@@ -200,7 +212,6 @@ void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
 		// Get all actors that the selected block overlaps
 		ChangedBlock->GetOverlappingActors(OverlappingActors);
 
-		// Check if there are exactly 4 actors overlapped
 		int32 blocksFound = 0;
 		bool AllBlocksSame = true;
 		for (AActor * actor : OverlappingActors)
@@ -230,6 +241,9 @@ void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
 					block->AddScore(1);
 				}
 			}
+
+			// And add 1 to changed block too
+			ChangedBlock->AddScore(1);
 		}
 	}
 
@@ -304,6 +318,7 @@ AColourWarsBlock::eMoveType AColourWarsBlock::MakeMove(AColourWarsBlock* OtherBl
 	OtherBlock->SetActorLocation(this->GridLocation);
 	OtherBlock->GridLocation = this->GridLocation;
 
+	OwningGrid->RemoveBlock(this);
 	// Finally destroy this block as it was 'taken'
 	this->Destroy();
 

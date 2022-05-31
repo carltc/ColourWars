@@ -59,15 +59,17 @@ protected:
 	// End AActor interface
 
 public:
-
-	/** Handle the block being clicked */
-	void AddScore();
+	/** Update the player scores */
+	void UpdateScore();
 
 	/** Handle the block being clicked */
 	void DeselectAllOtherBlocks();
 	
-	/** Handle the block being clicked */
+	/** Add a new block to the grid */
 	void SpawnNewBlock(AColourWarsBlock::eBlockType BlockType, FVector Location);
+
+	/** Remove this block from the grid */
+	void RemoveBlock(AColourWarsBlock* BlockToRemove);
 
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }

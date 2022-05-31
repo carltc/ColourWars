@@ -39,7 +39,7 @@ public:
 	class UMaterialInstance* OrangeMaterial;
 
 	/** Grid that owns us */
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Game")
 		class AColourWarsBlockGrid* GameGrid;
 
 	void NextTurn();

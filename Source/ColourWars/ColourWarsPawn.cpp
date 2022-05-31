@@ -14,21 +14,9 @@ AColourWarsPawn::AColourWarsPawn(const FObjectInitializer& ObjectInitializer)
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
 
-void AColourWarsPawn::Tick(float DeltaSeconds)
-{
-	/*Super::Tick(DeltaSeconds);
-
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-
-	}*/
-}
-
 void AColourWarsPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	PlayerInputComponent->BindAction("ResetVR", EInputEvent::IE_Pressed, this, &AColourWarsPawn::OnResetVR);
 }
 
 void AColourWarsPawn::CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult)
@@ -36,9 +24,4 @@ void AColourWarsPawn::CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutRe
 	Super::CalcCamera(DeltaTime, OutResult);
 
 	OutResult.Rotation = FRotator(-90.0f, -90.0f, 0.0f);
-}
-
-void AColourWarsPawn::OnResetVR()
-{
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 }

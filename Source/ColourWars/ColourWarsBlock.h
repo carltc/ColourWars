@@ -84,6 +84,8 @@ public:
 	UFUNCTION()
 	void OnFingerPressedBlock(ETouchIndex::Type FingerIndex, UPrimitiveComponent* TouchedComponent);
 	
+	UFUNCTION(BlueprintCallable)
+		void IncreaseThisBlock();
 
 	void SetBlockMaterial();
 	
