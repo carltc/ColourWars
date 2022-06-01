@@ -19,6 +19,6 @@ public:
 		int32 NumberOfPlayers;
 
 	UPROPERTY(Category = "Game", EditAnywhere, BlueprintReadWrite)
-		int32 GameGridSize;
+		int32 GameGridSize = 5;
 
 };

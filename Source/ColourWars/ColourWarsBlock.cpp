@@ -62,7 +62,7 @@ AColourWarsBlock::AColourWarsBlock()
 	// Setup the collision meshes
 	NeighbourCheck_CollisionBox = CreateDefaultSubobject<UBoxComponent>(FName("Neighbour Checker Collision Box"));
 	NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-	NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+	NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(2.f, 2.f, 2.f));
 	NeighbourCheck_CollisionBox->SetBoxExtent(FVector(100.f, 100.f, 100.f));
 	NeighbourCheck_CollisionBox->SetupAttachment(DummyRoot);
 }

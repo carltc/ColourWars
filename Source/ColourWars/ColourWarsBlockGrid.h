@@ -54,6 +54,9 @@ private:
 
 	/** Number of blocks along each side of grid */
 	int32 Size;
+	
+	/** Block sizes */
+	float BlocksScale = 1.f;
 
 
 protected:

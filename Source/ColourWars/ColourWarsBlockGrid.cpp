@@ -30,7 +30,6 @@ AColourWarsBlockGrid::AColourWarsBlockGrid()
 
 	// Set defaults
 	Size = 5;
-	BlockSpacing = 300.f;
 
 	// Create static mesh component
 	ScoreText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("ScoreText0"));
@@ -66,6 +65,8 @@ void AColourWarsBlockGrid::BeginPlay()
 	// Number of blocks
 	GetGameGridSize();
 	const int32 NumBlocks = Size * Size;
+	BlockSpacing = 1500.f / Size; 
+	BlocksScale = 4.f / Size;
 
 	// Set starting block type
 	int32 BlockTypeInt = 1;
@@ -173,6 +174,7 @@ void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, FVector Location)
 	AColourWarsBlock* NewBlock = GetWorld()->SpawnActor<AColourWarsBlock>(Location, FRotator(0, 0, 0));
 	NewBlock->GridLocation = Location;
 	NewBlock->BlockType = BlockType;
+	NewBlock->SetActorScale3D(FVector(BlocksScale, BlocksScale, BlocksScale));
 
 	// Tell the block about its owner
 	if (NewBlock != nullptr)
