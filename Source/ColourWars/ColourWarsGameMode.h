@@ -16,7 +16,8 @@ class AColourWarsGameMode : public AGameModeBase
 public:
 	AColourWarsGameMode();
 
-	AColourWarsBlock::eBlockType CurrentPlayer = AColourWarsBlock::eBlockType::Red;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player")
+	eBlockType CurrentPlayer = eBlockType::Red;
 
 	/** Pointer to white material used on the focused block */
 	UPROPERTY()
@@ -42,11 +43,16 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Game")
 		class AColourWarsBlockGrid* GameGrid;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game")
+		bool GameOver = false;
+
 	void NextTurn();
 
 	void IncrementPlayer();
 
-	class UMaterialInstance* GetPlayerColour(AColourWarsBlock::eBlockType BlockType);
+	void EndGame(eBlockType BlockType);
+
+	class UMaterialInstance* GetPlayerColour(eBlockType BlockType);
 };
 
 

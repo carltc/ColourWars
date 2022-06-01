@@ -69,11 +69,11 @@ void AColourWarsBlockGrid::BeginPlay()
 	int32 BlockTypeInt = 1;
 
 	// Create list to be used to randomly assign block types
-	TArray<AColourWarsBlock::eBlockType> BlockTypes;
+	TArray<eBlockType> BlockTypes;
 	for (int32 BlockIndex = 0; BlockIndex < NumBlocks; BlockIndex++)
 	{
 		// Get block type
-		AColourWarsBlock::eBlockType BlockType = static_cast<AColourWarsBlock::eBlockType>(BlockTypeInt);
+		eBlockType BlockType = static_cast<eBlockType>(BlockTypeInt);
 		BlockTypes.Add(BlockType);
 
 		// Increment the block type
@@ -123,13 +123,13 @@ void AColourWarsBlockGrid::UpdateScore()
 		AColourWarsBlock* block = Blocks[BlockIndex];
 		switch (block->BlockType)
 		{
-			case AColourWarsBlock::eBlockType::Red:
+			case eBlockType::Red:
 				redScore += block->Score;
 				break;
-			case AColourWarsBlock::eBlockType::Green:
+			case eBlockType::Green:
 				greenScore += block->Score;
 				break;
-			case AColourWarsBlock::eBlockType::Blue:
+			case eBlockType::Blue:
 				blueScore += block->Score;
 				break;
 		}
@@ -150,7 +150,7 @@ void AColourWarsBlockGrid::DeselectAllOtherBlocks()
 	}
 }
 
-void AColourWarsBlockGrid::SpawnNewBlock(AColourWarsBlock::eBlockType BlockType, FVector Location)
+void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, FVector Location)
 {
 	// Spawn a block
 	AColourWarsBlock* NewBlock = GetWorld()->SpawnActor<AColourWarsBlock>(Location, FRotator(0, 0, 0));
@@ -175,5 +175,19 @@ void AColourWarsBlockGrid::RemoveBlock(AColourWarsBlock* BlockToRemove)
 	Blocks.Remove(BlockToRemove);
 }
 
+bool AColourWarsBlockGrid::HasBlocks(eBlockType BlockType)
+{
+	for (int32 BlockIndex = 0; BlockIndex < Blocks.Num(); BlockIndex++)
+	{
+		AColourWarsBlock* block = Blocks[BlockIndex];
+
+		if (block->BlockType == BlockType)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
 
 #undef LOCTEXT_NAMESPACE

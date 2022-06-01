@@ -66,10 +66,13 @@ public:
 	void DeselectAllOtherBlocks();
 	
 	/** Add a new block to the grid */
-	void SpawnNewBlock(AColourWarsBlock::eBlockType BlockType, FVector Location);
+	void SpawnNewBlock(eBlockType BlockType, FVector Location);
 
 	/** Remove this block from the grid */
 	void RemoveBlock(AColourWarsBlock* BlockToRemove);
+	
+	/** Check if player has blocks left */
+	bool HasBlocks(eBlockType BlockType);
 
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }

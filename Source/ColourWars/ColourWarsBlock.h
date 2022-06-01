@@ -6,6 +6,32 @@
 #include "GameFramework/Actor.h"
 #include "ColourWarsBlock.generated.h"
 
+// Neighbour Check Type
+UENUM(BlueprintType)
+enum class eNeighbourCheckType : uint8
+{
+	Vertical   UMETA(DisplayName = "Vertical"),
+	Horizontal UMETA(DisplayName = "Horizontal")
+};
+
+// Block type
+UENUM(BlueprintType)
+enum class eBlockType : uint8
+{
+	None   UMETA(DisplayName = "None"),
+	Red    UMETA(DisplayName = "Red"),
+	Green  UMETA(DisplayName = "Green"),
+	Blue   UMETA(DisplayName = "Blue")
+};
+
+// Move type
+UENUM(BlueprintType)
+enum class eMoveType : uint8
+{
+	Attacking   UMETA(DisplayName = "Attacking"),
+	Defensive   UMETA(DisplayName = "Defensive")
+};
+
 /** A block that can be clicked */
 UCLASS(minimalapi)
 class AColourWarsBlock : public AActor
@@ -29,29 +55,6 @@ class AColourWarsBlock : public AActor
 
 public:
 	AColourWarsBlock();
-
-	// Neighbour Check Type
-	enum eNeighbourCheckType
-	{
-		Vertical,
-		Horizontal
-	};
-
-	// Block type
-	enum eBlockType
-	{
-		None,
-		Red,
-		Green,
-		Blue
-	};
-
-	// Move type
-	enum eMoveType
-	{
-		Attacking,
-		Defensive
-	};
 
 	eBlockType BlockType;
 

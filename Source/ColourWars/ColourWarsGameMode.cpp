@@ -51,29 +51,47 @@ void AColourWarsGameMode::NextTurn()
 void AColourWarsGameMode::IncrementPlayer()
 {
 	int32 playerInt = static_cast<int32>(CurrentPlayer);
+	int32 increments = 0;
 
-	playerInt++;
-
-	if (playerInt > 3)
+	// Increment player and check if they have blocks left and if not increment again until a player does
+	do 
 	{
-		playerInt = 1;
-	}
+		playerInt++;
+		increments++;
 
-	CurrentPlayer = static_cast<AColourWarsBlock::eBlockType>(playerInt);
+		if (playerInt > 3)
+		{
+			playerInt = 1;
+		}
+
+		CurrentPlayer = static_cast<eBlockType>(playerInt);
+	} 
+	while (!GameGrid->HasBlocks(CurrentPlayer));
+
+	// If 2 players were incremented through (back to starting player) then the game is over and a player has won.
+	if (increments > 1)
+	{
+		EndGame(CurrentPlayer);
+	}
 
 	// Set the player turn mesh
 	GameGrid->PlayerTurnMesh->SetMaterial(0, GetPlayerColour(CurrentPlayer));
 }
 
-class UMaterialInstance* AColourWarsGameMode::GetPlayerColour(AColourWarsBlock::eBlockType BlockType)
+void AColourWarsGameMode::EndGame(eBlockType BlockType)
+{
+	GameOver = true;
+}
+
+class UMaterialInstance* AColourWarsGameMode::GetPlayerColour(eBlockType BlockType)
 {
 	switch (BlockType)
 	{
-		case AColourWarsBlock::eBlockType::Red:
+		case eBlockType::Red:
 			return RedMaterial;
-		case AColourWarsBlock::eBlockType::Green:
+		case eBlockType::Green:
 			return GreenMaterial;
-		case AColourWarsBlock::eBlockType::Blue:
+		case eBlockType::Blue:
 			return BlueMaterial;
 	}
 

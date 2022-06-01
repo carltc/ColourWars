@@ -80,7 +80,10 @@ void AColourWarsBlock::BlockClicked(UPrimitiveComponent* ClickedComp, FKey Butto
 
 void AColourWarsBlock::OnFingerPressedBlock(ETouchIndex::Type FingerIndex, UPrimitiveComponent* TouchedComponent)
 {
-	HandleClicked();
+	if (!GameMode->GameOver)
+	{
+		HandleClicked();
+	}
 }
 
 void AColourWarsBlock::HandleClicked()
@@ -295,7 +298,7 @@ bool AColourWarsBlock::ValidMove(AColourWarsBlock* OtherBlock)
 	return false;
 }
 
-AColourWarsBlock::eMoveType AColourWarsBlock::MakeMove(AColourWarsBlock* OtherBlock)
+eMoveType AColourWarsBlock::MakeMove(AColourWarsBlock* OtherBlock)
 {
 	eMoveType MoveType = eMoveType::Defensive;
 
