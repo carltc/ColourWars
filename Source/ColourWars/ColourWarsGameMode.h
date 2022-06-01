@@ -13,8 +13,15 @@ class AColourWarsGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
+private:
+	int32 NumberOfPlayers;
+
 public:
 	AColourWarsGameMode();
+
+	/** Pointer to game instance */
+	UPROPERTY()
+		class UColourWarsGameInstance* GameInstance;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player")
 	eBlockType CurrentPlayer = eBlockType::Red;
@@ -35,6 +42,10 @@ public:
 	UPROPERTY()
 	class UMaterialInstance* BlueMaterial;
 
+	/** Pointer to blue material used on inactive blocks */
+	UPROPERTY()
+	class UMaterialInstance* PurpleMaterial;
+
 	/** Pointer to orange material used on active blocks */
 	UPROPERTY()
 	class UMaterialInstance* OrangeMaterial;
@@ -51,6 +62,9 @@ public:
 	void IncrementPlayer();
 
 	void EndGame(eBlockType BlockType);
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetNumberOfPlayers();
 
 	class UMaterialInstance* GetPlayerColour(eBlockType BlockType);
 };

@@ -4,6 +4,7 @@
 #include "ColourWarsBlock.h"
 #include "ColourWarsPawn.h"
 #include "ColourWarsGameMode.h"
+#include "ColourWarsGameInstance.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
@@ -63,6 +64,7 @@ void AColourWarsBlockGrid::BeginPlay()
 	PlayerTurnMesh->SetMaterial(0, GameMode->RedMaterial);
 
 	// Number of blocks
+	GetGameGridSize();
 	const int32 NumBlocks = Size * Size;
 
 	// Set starting block type
@@ -78,7 +80,7 @@ void AColourWarsBlockGrid::BeginPlay()
 
 		// Increment the block type
 		BlockTypeInt++;
-		if (BlockTypeInt > 3)
+		if (BlockTypeInt > GameMode->GetNumberOfPlayers())
 		{
 			BlockTypeInt = 1;
 		}
@@ -118,6 +120,7 @@ void AColourWarsBlockGrid::UpdateScore()
 	int32 redScore = 0;
 	int32 greenScore = 0;
 	int32 blueScore = 0;
+	int32 purpleScore = 0;
 	for (int32 BlockIndex = 0; BlockIndex < Blocks.Num(); BlockIndex++)
 	{
 		AColourWarsBlock* block = Blocks[BlockIndex];
@@ -132,11 +135,25 @@ void AColourWarsBlockGrid::UpdateScore()
 			case eBlockType::Blue:
 				blueScore += block->Score;
 				break;
+			case eBlockType::Purple:
+				purpleScore += block->Score;
+				break;
 		}
 	}
 
 	// Update text
-	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Red:{0} Green:{1} Blue:{2}"), FText::AsNumber(redScore), FText::AsNumber(greenScore), FText::AsNumber(blueScore)));
+	if (GameMode->GetNumberOfPlayers() == 2)
+	{
+		ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Red:{0} Green:{1}"), FText::AsNumber(redScore), FText::AsNumber(greenScore)));
+	}
+	else if (GameMode->GetNumberOfPlayers() == 3)
+	{
+		ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Red:{0} Green:{1} Blue:{2}"), FText::AsNumber(redScore), FText::AsNumber(greenScore), FText::AsNumber(blueScore)));
+	}
+	else if (GameMode->GetNumberOfPlayers() == 4)
+	{
+		ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "Red:{0} Green:{1} Blue:{2} Purple:{3}"), FText::AsNumber(redScore), FText::AsNumber(greenScore), FText::AsNumber(blueScore), FText::AsNumber(purpleScore)));
+	}
 }
 
 void AColourWarsBlockGrid::DeselectAllOtherBlocks()
@@ -188,6 +205,21 @@ bool AColourWarsBlockGrid::HasBlocks(eBlockType BlockType)
 	}
 
 	return false;
+}
+
+int32 AColourWarsBlockGrid::GetGameGridSize()
+{
+	if (GameInstance == nullptr)
+	{
+		// Set the game instance and number of players in this game
+		GameInstance = Cast<UColourWarsGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+		if (GameInstance != nullptr)
+		{
+			Size = GameInstance->GameGridSize;
+		}
+	}
+
+	return Size;
 }
 
 #undef LOCTEXT_NAMESPACE

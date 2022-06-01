@@ -18,10 +18,11 @@ enum class eNeighbourCheckType : uint8
 UENUM(BlueprintType)
 enum class eBlockType : uint8
 {
-	None   UMETA(DisplayName = "None"),
-	Red    UMETA(DisplayName = "Red"),
-	Green  UMETA(DisplayName = "Green"),
-	Blue   UMETA(DisplayName = "Blue")
+	None     UMETA(DisplayName = "None"),
+	Red      UMETA(DisplayName = "Red"),
+	Green    UMETA(DisplayName = "Green"),
+	Blue     UMETA(DisplayName = "Blue"),
+	Purple   UMETA(DisplayName = "Purple")
 };
 
 // Move type

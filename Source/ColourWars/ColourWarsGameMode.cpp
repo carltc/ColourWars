@@ -4,7 +4,10 @@
 #include "ColourWarsBlock.h"
 #include "ColourWarsBlockGrid.h"
 #include "ColourWarsPlayerController.h"
+#include "ColourWarsGameInstance.h"
 #include "ColourWarsPawn.h"
+#include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 
 AColourWarsGameMode::AColourWarsGameMode()
 {
@@ -15,12 +18,14 @@ AColourWarsGameMode::AColourWarsGameMode()
 		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> RedMaterial;
 		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> GreenMaterial;
 		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> BlueMaterial;
+		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> PurpleMaterial;
 		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> OrangeMaterial;
 		FConstructorStatics()
 			: BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
 			, RedMaterial(TEXT("/Game/Puzzle/Meshes/RedMaterial.RedMaterial"))
 			, GreenMaterial(TEXT("/Game/Puzzle/Meshes/GreenMaterial.GreenMaterial"))
 			, BlueMaterial(TEXT("/Game/Puzzle/Meshes/BlueMaterial.BlueMaterial"))
+			, PurpleMaterial(TEXT("/Game/Puzzle/Meshes/PurpleMaterial.PurpleMaterial"))
 			, OrangeMaterial(TEXT("/Game/Puzzle/Meshes/OrangeMaterial.OrangeMaterial"))
 		{
 		}
@@ -32,12 +37,14 @@ AColourWarsGameMode::AColourWarsGameMode()
 	RedMaterial = ConstructorStatics.RedMaterial.Get();
 	GreenMaterial = ConstructorStatics.GreenMaterial.Get();
 	BlueMaterial = ConstructorStatics.BlueMaterial.Get();
+	PurpleMaterial = ConstructorStatics.PurpleMaterial.Get();
 	OrangeMaterial = ConstructorStatics.OrangeMaterial.Get();
 
 	// no pawn by default
 	DefaultPawnClass = AColourWarsPawn::StaticClass();
 	// use our own player controller class
 	PlayerControllerClass = AColourWarsPlayerController::StaticClass();
+
 }
 
 void AColourWarsGameMode::NextTurn()
@@ -59,7 +66,7 @@ void AColourWarsGameMode::IncrementPlayer()
 		playerInt++;
 		increments++;
 
-		if (playerInt > 3)
+		if (playerInt > GetNumberOfPlayers())
 		{
 			playerInt = 1;
 		}
@@ -68,8 +75,8 @@ void AColourWarsGameMode::IncrementPlayer()
 	} 
 	while (!GameGrid->HasBlocks(CurrentPlayer));
 
-	// If 2 players were incremented through (back to starting player) then the game is over and a player has won.
-	if (increments > 1)
+	// If it is still the same players turn after incrementing this means that it is the only player left
+	if (playerInt == static_cast<int32>(CurrentPlayer))
 	{
 		EndGame(CurrentPlayer);
 	}
@@ -83,6 +90,21 @@ void AColourWarsGameMode::EndGame(eBlockType BlockType)
 	GameOver = true;
 }
 
+int32 AColourWarsGameMode::GetNumberOfPlayers()
+{
+	if (GameInstance == nullptr)
+	{
+		// Set the game instance and number of players in this game
+		GameInstance = Cast<UColourWarsGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+		if (GameInstance != nullptr)
+		{
+			NumberOfPlayers = GameInstance->NumberOfPlayers;
+		}
+	}
+
+	return NumberOfPlayers;
+}
+
 class UMaterialInstance* AColourWarsGameMode::GetPlayerColour(eBlockType BlockType)
 {
 	switch (BlockType)
@@ -93,6 +115,8 @@ class UMaterialInstance* AColourWarsGameMode::GetPlayerColour(eBlockType BlockTy
 			return GreenMaterial;
 		case eBlockType::Blue:
 			return BlueMaterial;
+		case eBlockType::Purple:
+			return PurpleMaterial;
 	}
 
 	return OrangeMaterial;

@@ -340,8 +340,14 @@ bool AColourWarsBlock::CanDefeat(AColourWarsBlock* DefendingBlock)
 
 int32 AColourWarsBlock::AttackingCost(AColourWarsBlock* DefendingBlock)
 {
-	switch (DefendingBlock->BlockType)
+	if (GameMode->GetNumberOfPlayers() == 2)
 	{
+		return DefendingBlock->Score;
+	}
+	else if (GameMode->GetNumberOfPlayers() == 3)
+	{
+		switch (DefendingBlock->BlockType)
+		{
 		case eBlockType::Red:
 			if (this->BlockType == eBlockType::Green)
 			{
@@ -360,6 +366,37 @@ int32 AColourWarsBlock::AttackingCost(AColourWarsBlock* DefendingBlock)
 				return DefendingBlock->Score * 2;
 			}
 			return DefendingBlock->Score;
+		}
+	}
+	else if (GameMode->GetNumberOfPlayers() == 4)
+	{
+		switch (DefendingBlock->BlockType)
+		{
+		case eBlockType::Red:
+			if (this->BlockType == eBlockType::Green)
+			{
+				return DefendingBlock->Score * 2;
+			}
+			return DefendingBlock->Score;
+		case eBlockType::Green:
+			if (this->BlockType == eBlockType::Blue)
+			{
+				return DefendingBlock->Score * 2;
+			}
+			return DefendingBlock->Score;
+		case eBlockType::Blue:
+			if (this->BlockType == eBlockType::Purple)
+			{
+				return DefendingBlock->Score * 2;
+			}
+			return DefendingBlock->Score;
+		case eBlockType::Purple:
+			if (this->BlockType == eBlockType::Red)
+			{
+				return DefendingBlock->Score * 2;
+			}
+			return DefendingBlock->Score;
+		}
 	}
 
 	return false;

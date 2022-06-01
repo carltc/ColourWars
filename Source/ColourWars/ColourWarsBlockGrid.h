@@ -28,10 +28,6 @@ public:
 	/** How many blocks have been clicked */
 	int32 Score;
 
-	/** Number of blocks along each side of grid */
-	UPROPERTY(Category=Grid, EditAnywhere, BlueprintReadOnly)
-	int32 Size;
-
 	/** Spacing of blocks */
 	UPROPERTY(Category=Grid, EditAnywhere, BlueprintReadOnly)
 	float BlockSpacing;
@@ -44,6 +40,10 @@ public:
 	UPROPERTY()
 		class AColourWarsGameMode* GameMode;
 
+	/** Pointer to game instance */
+	UPROPERTY()
+		class UColourWarsGameInstance* GameInstance;
+
 	/** StaticMesh component for the clickable block */
 	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		class UStaticMeshComponent* PlayerTurnMesh;
@@ -51,6 +51,9 @@ public:
 private:
 	/** Array of all blocks in grid */
 	TArray<AColourWarsBlock*> Blocks;
+
+	/** Number of blocks along each side of grid */
+	int32 Size;
 
 
 protected:
@@ -73,6 +76,9 @@ public:
 	
 	/** Check if player has blocks left */
 	bool HasBlocks(eBlockType BlockType);
+
+	UFUNCTION(BlueprintCallable)
+		int32 GetGameGridSize();
 
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }
