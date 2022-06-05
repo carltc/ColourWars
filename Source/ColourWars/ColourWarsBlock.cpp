@@ -157,6 +157,39 @@ void AColourWarsBlock::IncreaseThisBlock()
 	GameMode->NextTurn();
 }
 
+void AColourWarsBlock::CombineNeighbourBlocks()
+{
+	bool moveMade = false;
+
+	// Find all neighbouring blocks
+	TSet<AActor*> OverlappingActors;
+	this->GetOverlappingActors(OverlappingActors);
+
+	for (AActor* actor : OverlappingActors)
+	{
+		AColourWarsBlock* block = Cast<AColourWarsBlock>(actor);
+		if (block != nullptr)
+		{
+			// Check if this block type is the same type
+			if (block->BlockType == this->BlockType && block->Score > 1)
+			{
+				this->AddScore(block->Score - 1);
+				block->SetScore(1);
+				moveMade = true;
+			}
+		}
+	}
+
+	if (moveMade)
+	{
+		// Deselect the selected block
+		PlayerPawn->SelectedBlock->Deselect();
+
+		// Set gamemode to next player turn
+		GameMode->NextTurn();
+	}
+}
+
 bool AColourWarsBlock::NeighbourCheck(AColourWarsBlock* OtherBlock, eNeighbourCheckType CheckType)
 {
 	TSet<AActor*> OverlappingActors;
@@ -294,6 +327,14 @@ void AColourWarsBlock::AddScore(int32 ScoreToAdd)
 {
 	// Add Score
 	Score += ScoreToAdd;
+
+	SetScore(Score);
+}
+
+void AColourWarsBlock::SetScore(int32 ScoreToSet)
+{
+	// Add Score
+	Score = ScoreToSet;
 
 	// Update text
 	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "{0}"), FText::AsNumber(Score)));

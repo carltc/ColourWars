@@ -90,6 +90,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 		void IncreaseThisBlock();
+	
+	UFUNCTION(BlueprintCallable)
+		void CombineNeighbourBlocks();
 
 	void SetBlockMaterial();
 	
@@ -104,6 +107,8 @@ public:
 	void Deselect();
 
 	void AddScore(int32 ScoreToAdd);
+	
+	void SetScore(int32 ScoreToSet);
 	
 	bool ValidMove(AColourWarsBlock* OtherBlock);
 	
