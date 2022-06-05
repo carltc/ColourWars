@@ -117,6 +117,8 @@ void AColourWarsBlockGrid::BeginPlay()
 
 void AColourWarsBlockGrid::UpdateScore()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Updating score."));
+
 	// Calculate the score of each player
 	int32 redScore = 0;
 	int32 greenScore = 0;

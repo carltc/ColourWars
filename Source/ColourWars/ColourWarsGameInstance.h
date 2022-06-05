@@ -16,7 +16,7 @@ class COLOURWARS_API UColourWarsGameInstance : public UGameInstance
 
 public:
 	UPROPERTY(Category = "Game", EditAnywhere, BlueprintReadWrite)
-		int32 NumberOfPlayers;
+		int32 NumberOfPlayers = 2;
 
 	UPROPERTY(Category = "Game", EditAnywhere, BlueprintReadWrite)
 		int32 GameGridSize = 5;

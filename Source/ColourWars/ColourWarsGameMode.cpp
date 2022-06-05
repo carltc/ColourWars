@@ -58,13 +58,14 @@ void AColourWarsGameMode::NextTurn()
 void AColourWarsGameMode::IncrementPlayer()
 {
 	int32 playerInt = static_cast<int32>(CurrentPlayer);
-	int32 increments = 0;
+	int32 previousPlayerInt = static_cast<int32>(CurrentPlayer);
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Setting next player."));
 
 	// Increment player and check if they have blocks left and if not increment again until a player does
 	do 
 	{
 		playerInt++;
-		increments++;
 
 		if (playerInt > GetNumberOfPlayers())
 		{
@@ -76,8 +77,9 @@ void AColourWarsGameMode::IncrementPlayer()
 	while (!GameGrid->HasBlocks(CurrentPlayer));
 
 	// If it is still the same players turn after incrementing this means that it is the only player left
-	if (playerInt == static_cast<int32>(CurrentPlayer))
+	if (previousPlayerInt == static_cast<int32>(CurrentPlayer))
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Game over."));
 		EndGame(CurrentPlayer);
 	}
 

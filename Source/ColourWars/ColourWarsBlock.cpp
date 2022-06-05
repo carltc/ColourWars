@@ -62,8 +62,8 @@ AColourWarsBlock::AColourWarsBlock()
 	// Setup the collision meshes
 	NeighbourCheck_CollisionBox = CreateDefaultSubobject<UBoxComponent>(FName("Neighbour Checker Collision Box"));
 	NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-	NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(2.f, 2.f, 2.f));
-	NeighbourCheck_CollisionBox->SetBoxExtent(FVector(100.f, 100.f, 100.f));
+	NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+	NeighbourCheck_CollisionBox->SetBoxExtent(FVector(200.f, 200.f, 200.f));
 	NeighbourCheck_CollisionBox->SetupAttachment(DummyRoot);
 }
 
@@ -100,6 +100,8 @@ void AColourWarsBlock::HandleClicked()
 			{
 				if (ValidMove(PlayerPawn->SelectedBlock))
 				{
+					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Making block move."));
+
 					eMoveType MoveType = MakeMove(PlayerPawn->SelectedBlock);
 
 					// If this was an attacking move then a bonus might be available
@@ -115,7 +117,15 @@ void AColourWarsBlock::HandleClicked()
 					// Set gamemode to next player turn
 					GameMode->NextTurn();
 				}
+				else
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Invalid moved attempted."));
+				}
 				return;
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("This block is not a neighbour of the selected block."));
 			}
 		}
 
@@ -123,12 +133,14 @@ void AColourWarsBlock::HandleClicked()
 		// Check if this block is the correct one for the current player
 		if (GameMode->CurrentPlayer == BlockType)
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Unselecting all and seleting this block."));
 			OwningGrid->DeselectAllOtherBlocks();
 			this->Select();
 		}
 	}
 	else
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Deselecting block."));
 		this->Deselect();
 	}
 }
@@ -195,20 +207,20 @@ void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
 		switch (i)
 		{
 			case 0:
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(2.f, 2.f, 1.f));
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(150.f, 150.f, 0.f));
+				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(100.f, 100.f, 0.f));
 			break;
 			case 1:
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(2.f, 2.f, 1.f));
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(-150.f, 150.f, 0.f));
+				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(-100.f, 100.f, 0.f));
 			break;
 			case 2:
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(2.f, 2.f, 1.f));
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(-150.f, -150.f, 0.f));
+				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(-100.f, -100.f, 0.f));
 			break;
 			case 3:
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(2.f, 2.f, 1.f));
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(150.f, -150.f, 0.f));
+				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(100.f, -100.f, 0.f));
 			break;
 		}
 
@@ -247,6 +259,13 @@ void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
 
 			// And add 1 to changed block too
 			ChangedBlock->AddScore(1);
+		}
+		else
+		{
+			FString base = "Only found '";
+			base.Append(FString::FromInt(blocksFound));
+			base.Append("' neighbouring blocks of same type.");
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, base);
 		}
 	}
 
