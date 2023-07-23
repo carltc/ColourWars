@@ -60,6 +60,8 @@ public:
 	void NextTurn();
 
 	void IncrementPlayer();
+	
+	void ApplyCapitalBlockBonus();
 
 	void EndGame(eBlockType BlockType);
 

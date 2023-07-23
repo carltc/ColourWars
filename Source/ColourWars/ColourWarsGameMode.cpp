@@ -63,7 +63,7 @@ void AColourWarsGameMode::IncrementPlayer()
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Setting next player."));
 
 	// Increment player and check if they have blocks left and if not increment again until a player does
-	do 
+	do
 	{
 		playerInt++;
 
@@ -73,8 +73,7 @@ void AColourWarsGameMode::IncrementPlayer()
 		}
 
 		CurrentPlayer = static_cast<eBlockType>(playerInt);
-	} 
-	while (!GameGrid->HasBlocks(CurrentPlayer));
+	} while (!GameGrid->HasBlocks(CurrentPlayer));
 
 	// If it is still the same players turn after incrementing this means that it is the only player left
 	if (previousPlayerInt == static_cast<int32>(CurrentPlayer))
@@ -85,6 +84,16 @@ void AColourWarsGameMode::IncrementPlayer()
 
 	// Set the player turn mesh
 	GameGrid->PlayerTurnMesh->SetMaterial(0, GetPlayerColour(CurrentPlayer));
+}
+
+void AColourWarsGameMode::ApplyCapitalBlockBonus()
+{
+	//int32 playerInt = static_cast<int32>(CurrentPlayer);
+
+	//if (GameGrid->PlayerPawn->SelectedBlock->bIsCapitalBlock)
+	//{
+		//GameGrid->PlayerPawn->SelectedBlock->ApplyCapitalBlockBonus();
+	//}
 }
 
 void AColourWarsGameMode::EndGame(eBlockType BlockType)

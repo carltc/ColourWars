@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GridCoord.h"
 #include "ColourWarsBlock.generated.h"
 
 // Neighbour Check Type
@@ -50,6 +51,10 @@ class AColourWarsBlock : public AActor
 	/** Text component for the score */
 	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		class UTextRenderComponent* ScoreText;
+	
+	/** Capital block visual component */
+	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		class UTextRenderComponent* CapitalBlockVisual;
 
 	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		class UBoxComponent* NeighbourCheck_CollisionBox;
@@ -62,10 +67,16 @@ public:
 	/** Has this block been selected */
 	bool bIsSelected;
 	
+	/** Is this block the capital block of the owning player */
+	bool bIsCapitalBlock;
+	
 	/** Score of this block */
 	int32 Score;
 	
-	/** Grid location of this block */
+	/** Grid coordinate of this block */
+	GridCoord GridCoord;
+	
+	/** World location of block in grid */
 	FVector GridLocation;
 
 	/** Pointer to player pawn */
@@ -110,6 +121,12 @@ public:
 	
 	void SetScore(int32 ScoreToSet);
 	
+	void SetCapitalBlock();
+	
+	void UnsetCapitalBlock();
+
+	void ApplyCapitalBlockBonus();
+
 	bool ValidMove(AColourWarsBlock* OtherBlock);
 	
 	eMoveType MakeMove(AColourWarsBlock* OtherBlock);
@@ -117,6 +134,9 @@ public:
 	bool CanDefeat(AColourWarsBlock* DefendingBlock);
 	
 	int32 AttackingCost(AColourWarsBlock* DefendingBlock);
+
+	/** Get Neighbouring blocks */
+	TArray<AColourWarsBlock*> GetNeighbouringBlocks();
 
 private:
 	/** Array of all blocks in grid */

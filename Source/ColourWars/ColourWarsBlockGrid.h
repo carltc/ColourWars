@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ColourWarsBlock.h"
+#include "GridCoord.h"
 #include "ColourWarsBlockGrid.generated.h"
 
 /** Class used to spawn blocks and manage score */
@@ -67,18 +68,30 @@ protected:
 public:
 	/** Update the player scores */
 	void UpdateScore();
-
+	
+	/** Set the starting capital blocks for each player */
+	void SetCapitalBlocks();
+	
 	/** Handle the block being clicked */
 	void DeselectAllOtherBlocks();
 	
 	/** Add a new block to the grid */
-	void SpawnNewBlock(eBlockType BlockType, FVector Location);
+	void SpawnNewBlock(eBlockType BlockType, GridCoord GridCoord);
 
 	/** Remove this block from the grid */
 	void RemoveBlock(AColourWarsBlock* BlockToRemove);
 	
 	/** Check if player has blocks left */
 	bool HasBlocks(eBlockType BlockType);
+
+	/** Convert an index value to a grid coordinate */
+	GridCoord ToGridCoord(int Index);
+	
+	/** Convert an index value to a grid coordinate */
+	int ToGridIndex(GridCoord GridCoord);
+
+	/** Get all neighbour blocks to the central block */
+	TArray<AColourWarsBlock*> GetNeighbours(AColourWarsBlock CentralBlock);
 
 	UFUNCTION(BlueprintCallable)
 		int32 GetGameGridSize();

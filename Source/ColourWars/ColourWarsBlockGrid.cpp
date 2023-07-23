@@ -5,8 +5,10 @@
 #include "ColourWarsPawn.h"
 #include "ColourWarsGameMode.h"
 #include "ColourWarsGameInstance.h"
+#include "GridCoord.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/World.h"
+#include "cmath"
 #include "Kismet/GameplayStatics.h"
 
 #define LOCTEXT_NAMESPACE "PuzzleBlockGrid"
@@ -46,7 +48,6 @@ AColourWarsBlockGrid::AColourWarsBlockGrid()
 	PlayerTurnMesh->SetRelativeLocation(FVector(-911.f, 0.f, 0.f));
 	PlayerTurnMesh->SetupAttachment(DummyRoot);
 }
-
 
 void AColourWarsBlockGrid::BeginPlay()
 {
@@ -93,27 +94,32 @@ void AColourWarsBlockGrid::BeginPlay()
 	// Loop to spawn each block
 	for(int32 BlockIndex=0; BlockIndex<NumBlocks; BlockIndex++)
 	{
-		const float HalfSize = ((float)Size-1.0f)/2.0f;
-		const float XOffset = ((BlockIndex/Size) * BlockSpacing) - (HalfSize * BlockSpacing); // Divide by dimension
-		const float YOffset = ((BlockIndex%Size) * BlockSpacing) - (HalfSize * BlockSpacing); // Modulo gives remainder
-
-		// Make position vector, offset from Grid location
-		const FVector BlockLocation = FVector(XOffset, YOffset, 0.f) + GetActorLocation();
+		//const float HalfSize = ((float)Size-1.0f)/2.0f;
+		const float Xcoord = BlockIndex/Size; // Divide by dimension
+		const float Ycoord = BlockIndex%Size; // Modulo gives remainder
+		//const float XOffset = ((BlockIndex/Size) * BlockSpacing) - (HalfSize * BlockSpacing); // Divide by dimension
+		//const float YOffset = ((BlockIndex%Size) * BlockSpacing) - (HalfSize * BlockSpacing); // Modulo gives remainder
 
 		// Get random blocktype
 		max = BlockTypes.Num();
 		int32 RandomIndex = rand() % max;
 
+		GridCoord newGridCoord;
+		newGridCoord.X = Xcoord;
+		newGridCoord.Y = Ycoord;
+
 		// Spawn a block
-		SpawnNewBlock(BlockTypes[RandomIndex], BlockLocation);
+		SpawnNewBlock(BlockTypes[RandomIndex], newGridCoord);
 
 		// Remove block type just used
 		BlockTypes.RemoveAt(RandomIndex);
 	}
 
+	// Set the capital blocks of each player
+	this->SetCapitalBlocks();
+
 	this->UpdateScore();
 }
-
 
 void AColourWarsBlockGrid::UpdateScore()
 {
@@ -159,6 +165,32 @@ void AColourWarsBlockGrid::UpdateScore()
 	}
 }
 
+void AColourWarsBlockGrid::SetCapitalBlocks()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Setting capital blocks."));
+
+	// Set capital block for each player
+	for (int32 PlayerIndex = 1; PlayerIndex < GameMode->GetNumberOfPlayers() + 1; PlayerIndex++)
+	{
+		// Get all blocks of this player type
+		TArray<AColourWarsBlock*> PlayerBlocks;
+		for (int32 BlockIndex = 0; BlockIndex < Blocks.Num(); BlockIndex++)
+		{
+			AColourWarsBlock* block = Blocks[BlockIndex];
+
+			// If block is same as player then add it to the player blocks
+			if ((int32)block->BlockType == PlayerIndex)
+			{
+				PlayerBlocks.Add(block);
+			}
+		}
+
+		// Randomly select a player block to be the capital block
+		int32 RandomIndex = rand() % PlayerBlocks.Num();
+		PlayerBlocks[RandomIndex]->SetCapitalBlock();
+	}
+}
+
 void AColourWarsBlockGrid::DeselectAllOtherBlocks()
 {
 	PlayerPawn->SelectedBlock = nullptr;
@@ -170,12 +202,19 @@ void AColourWarsBlockGrid::DeselectAllOtherBlocks()
 	}
 }
 
-void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, FVector Location)
+void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, GridCoord GridCoord)
 {
+	const float HalfSize = ((float)Size - 1.0f) / 2.0f;
+	const float XOffset = (GridCoord.X * BlockSpacing) - (HalfSize * BlockSpacing); // Divide by dimension
+	const float YOffset = (GridCoord.Y * BlockSpacing) - (HalfSize * BlockSpacing); // Modulo gives remainder
+
+	const FVector WorldLocation = FVector(XOffset, YOffset, 0.f) + GetActorLocation();
+
 	// Spawn a block
-	AColourWarsBlock* NewBlock = GetWorld()->SpawnActor<AColourWarsBlock>(Location, FRotator(0, 0, 0));
-	NewBlock->GridLocation = Location;
+	AColourWarsBlock* NewBlock = GetWorld()->SpawnActor<AColourWarsBlock>(WorldLocation, FRotator(0, 0, 0));
 	NewBlock->BlockType = BlockType;
+	NewBlock->GridCoord = GridCoord;
+	NewBlock->GridLocation = WorldLocation;
 	NewBlock->SetActorScale3D(FVector(BlocksScale, BlocksScale, BlocksScale));
 
 	// Tell the block about its owner
@@ -224,6 +263,43 @@ int32 AColourWarsBlockGrid::GetGameGridSize()
 	}
 
 	return Size;
+}
+
+/// <summary>
+/// Convert an index value to a grid coordinate
+/// </summary>
+/// <param name="Index"></param>
+/// <returns></returns>
+GridCoord AColourWarsBlockGrid::ToGridCoord(int Index)
+{
+	GridCoord gridCoord;
+
+	gridCoord.X = Index % GameInstance->GameGridSize;
+	gridCoord.Y = std::floor((double)(Index / GameInstance->GameGridSize));
+
+	return gridCoord;
+}
+
+/// <summary>
+/// Convert an index value to a grid coordinate
+/// </summary>
+/// <param name="GridCoord"></param>
+/// <returns></returns>
+int AColourWarsBlockGrid::ToGridIndex(GridCoord GridCoord)
+{
+	return (GridCoord.Y * GameInstance->GameGridSize) + GridCoord.X;
+}
+
+/// <summary>
+/// Get all neighbour blocks to the central block
+/// </summary>
+/// <param name="CentralBlock"></param>
+/// <returns></returns>
+TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock CentralBlock)
+{
+	TArray<AColourWarsBlock*> neighbours;
+
+	return neighbours;
 }
 
 #undef LOCTEXT_NAMESPACE
