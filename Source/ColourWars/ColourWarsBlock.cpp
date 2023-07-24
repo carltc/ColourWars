@@ -30,6 +30,7 @@ AColourWarsBlock::AColourWarsBlock()
 	// Set defaults
 	Score = 1;
 	bIsCapitalBlock = false;
+	BlockType = eBlockType::None;
 
 	// Set the player pawn
 	PlayerPawn = Cast<AColourWarsPawn>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
@@ -88,6 +89,17 @@ void AColourWarsBlock::SetBlockMaterial()
 }
 
 /// <summary>
+/// Set the type of this Block and update it to reflect the change
+/// </summary>
+/// <param name="BlockType"></param>
+void AColourWarsBlock::SetBlockType(eBlockType newBlockType)
+{
+	BlockType = newBlockType;
+
+	SetBlockMaterial();
+}
+
+/// <summary>
 /// Perform a click when a mouse click on this block is performed.
 /// </summary>
 /// <param name="ClickedComp"></param>
@@ -129,12 +141,16 @@ void AColourWarsBlock::HandleClicked()
 			if (NeighbourCheck(PlayerPawn->SelectedBlock, eNeighbourCheckType::Horizontal)
 				|| NeighbourCheck(PlayerPawn->SelectedBlock, eNeighbourCheckType::Vertical))
 			{
-				if (ValidMove(PlayerPawn->SelectedBlock))
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Attempting block move."));
+
+				eMoveType MoveType = OwningGrid->MoveBlock(PlayerPawn->SelectedBlock, this);
+
+				if (MoveType == eMoveType::Invalid)
 				{
-					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Making block move."));
-
-					eMoveType MoveType = MakeMove(PlayerPawn->SelectedBlock);
-
+					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Invalid moved attempted."));
+				}
+				else
+				{
 					// If this was an attacking move then a bonus might be available
 					if (MoveType == eMoveType::Attacking)
 					{
@@ -150,10 +166,6 @@ void AColourWarsBlock::HandleClicked()
 
 					// Set gamemode to next player turn
 					GameMode->NextTurn();
-				}
-				else
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Invalid moved attempted."));
 				}
 				return;
 			}
@@ -487,7 +499,7 @@ bool AColourWarsBlock::ValidMove(AColourWarsBlock* OtherBlock)
 }
 
 /// <summary>
-/// Make the move for this block to take the other block
+/// Make the move for this block to be taken by the other block
 /// </summary>
 /// <param name="OtherBlock"></param>
 /// <returns></returns>
@@ -511,8 +523,8 @@ eMoveType AColourWarsBlock::MakeMove(AColourWarsBlock* OtherBlock)
 	OwningGrid->SpawnNewBlock(OtherBlock->BlockType, OtherBlock->GridCoord);
 
 	// Place this block in location of other block
-	OtherBlock->SetActorLocation(this->GridLocation);
-	OtherBlock->GridLocation = this->GridLocation;
+	//OtherBlock->SetActorLocation(this->GridLocation);
+	//OtherBlock->GridLocation = this->GridLocation;
 
 	// Move capital status if this block is capital block
 	if (this->bIsCapitalBlock)
@@ -543,7 +555,7 @@ bool AColourWarsBlock::CanDefeat(AColourWarsBlock* DefendingBlock)
 }
 
 /// <summary>
-/// Get the cost that is required for an attacker to take the defending block
+/// Get the cost that is required for this block to take the defending block
 /// </summary>
 /// <param name="DefendingBlock"></param>
 /// <returns></returns>

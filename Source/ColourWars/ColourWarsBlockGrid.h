@@ -81,8 +81,17 @@ public:
 	/** Remove this block from the grid */
 	void RemoveBlock(AColourWarsBlock* BlockToRemove);
 	
+	/** Move the StartingBlock onto the EndingBlock */
+	eMoveType MoveBlock(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock);
+
 	/** Check if player has blocks left */
 	bool HasBlocks(eBlockType BlockType);
+
+	/** Check if these 2 blocks are neighbours, either vertically or horizontally. */
+	bool AreBlocksNeighbours(AColourWarsBlock* Block1, AColourWarsBlock* Block2);
+
+	/** Is the move for this block to take the other block valid? */
+	bool IsValidMove(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock);
 
 	/** Convert an index value to a grid coordinate */
 	GridCoord ToGridCoord(int Index);

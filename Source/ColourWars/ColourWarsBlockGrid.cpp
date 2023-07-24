@@ -212,7 +212,6 @@ void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, GridCoord GridCoo
 
 	// Spawn a block
 	AColourWarsBlock* NewBlock = GetWorld()->SpawnActor<AColourWarsBlock>(WorldLocation, FRotator(0, 0, 0));
-	NewBlock->BlockType = BlockType;
 	NewBlock->GridCoord = GridCoord;
 	NewBlock->GridLocation = WorldLocation;
 	NewBlock->SetActorScale3D(FVector(BlocksScale, BlocksScale, BlocksScale));
@@ -223,8 +222,7 @@ void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, GridCoord GridCoo
 		NewBlock->OwningGrid = this;
 	}
 
-	// Set the block material
-	NewBlock->SetBlockMaterial();
+	NewBlock->SetBlockType(BlockType);
 
 	// Add the block to the array of blocks
 	Blocks.Add(NewBlock);
@@ -233,6 +231,82 @@ void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, GridCoord GridCoo
 void AColourWarsBlockGrid::RemoveBlock(AColourWarsBlock* BlockToRemove)
 {
 	Blocks.Remove(BlockToRemove);
+}
+
+/// <summary>
+/// Move the StartingBlock onto the EndingBlock
+/// </summary>
+/// <param name="StartingBlock"></param>
+/// <param name="EndingBlock"></param>
+/// <returns></returns>
+eMoveType AColourWarsBlockGrid::MoveBlock(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock)
+{
+	try
+	{
+		// If blocks are not neighbours then don't move the block
+		if (!AreBlocksNeighbours(StartingBlock, EndingBlock) || !IsValidMove(StartingBlock, EndingBlock))
+		{
+			return eMoveType::Invalid;
+		}
+
+		eMoveType moveType = eMoveType::Invalid;
+
+		// If blocks are same type then move score over to ending block
+		if (StartingBlock->BlockType == EndingBlock->BlockType)
+		{
+			EndingBlock->AddScore(StartingBlock->Score);
+			StartingBlock->SetScore(0);
+			moveType = eMoveType::Defensive;
+		}
+		else
+		{
+			int32 const attackingCost = StartingBlock->AttackingCost(EndingBlock);
+			EndingBlock->SetScore(StartingBlock->Score - attackingCost);
+			StartingBlock->SetScore(0);
+			EndingBlock->SetBlockType(StartingBlock->BlockType);
+			moveType = eMoveType::Attacking;
+		}
+
+		// Add a score to the starting block
+		StartingBlock->AddScore(1);
+
+		// Move capital status if this block is capital block
+		if (StartingBlock->bIsCapitalBlock)
+		{
+			StartingBlock->UnsetCapitalBlock();
+			EndingBlock->SetCapitalBlock();
+		}
+
+		return moveType;
+	}
+	catch (...)
+	{
+		return eMoveType::Invalid;
+	}
+}
+
+/// <summary>
+/// Is the move for this block to take the other block valid?
+/// </summary>
+/// <param name="StartingBlock"></param>
+/// <param name="EndingBlock"></param>
+/// <returns></returns>
+bool AColourWarsBlockGrid::IsValidMove(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock)
+{
+	if (StartingBlock->BlockType == EndingBlock->BlockType)
+	{
+		return true;
+	}
+	else
+	{
+		// Check if the 'attacking' block has enough score to 'take' the other block
+		if (StartingBlock->CanDefeat(EndingBlock))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool AColourWarsBlockGrid::HasBlocks(eBlockType BlockType)
@@ -248,6 +322,20 @@ bool AColourWarsBlockGrid::HasBlocks(eBlockType BlockType)
 	}
 
 	return false;
+}
+
+/// <summary>
+/// Check if these 2 blocks are neighbours, either vertically or horizontally
+/// </summary>
+/// <param name="Block1"></param>
+/// <param name="Block2"></param>
+/// <returns></returns>
+bool AColourWarsBlockGrid::AreBlocksNeighbours(AColourWarsBlock* Block1, AColourWarsBlock* Block2)
+{
+	int32 const Xdiff = abs(Block1->GridCoord.X - Block2->GridCoord.X);
+	int32 const Ydiff = abs(Block1->GridCoord.Y - Block2->GridCoord.Y);
+
+	return Xdiff == 1 || Ydiff == 1;
 }
 
 int32 AColourWarsBlockGrid::GetGameGridSize()

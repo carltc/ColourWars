@@ -30,6 +30,7 @@ enum class eBlockType : uint8
 UENUM(BlueprintType)
 enum class eMoveType : uint8
 {
+	Invalid     UMETA(DisplayName = "Invalid"),
 	Attacking   UMETA(DisplayName = "Attacking"),
 	Defensive   UMETA(DisplayName = "Defensive")
 };
@@ -105,7 +106,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void CombineNeighbourBlocks();
 
-	void SetBlockMaterial();
+	void SetBlockType(eBlockType newBlockType);
 	
 	void HandleClicked();
 
@@ -142,11 +143,14 @@ private:
 	/** Array of all blocks in grid */
 	TArray<AColourWarsBlock*> NeighbouringBlocks;
 
+	void SetBlockMaterial();
+
 public:
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }
 	/** Returns BlockMesh subobject **/
 	FORCEINLINE class UStaticMeshComponent* GetBlockMesh() const { return BlockMesh; }
+
 };
 
 
