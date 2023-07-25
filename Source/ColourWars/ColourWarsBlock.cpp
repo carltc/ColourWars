@@ -151,19 +151,6 @@ void AColourWarsBlock::HandleClicked()
 				}
 				else
 				{
-					// If this was an attacking move then a bonus might be available
-					if (MoveType == eMoveType::Attacking)
-					{
-						// Check if a bonus should be awarded and if so do it
-						BonusCheck(PlayerPawn->SelectedBlock);
-					}
-
-					// Deselect the selected block
-					PlayerPawn->SelectedBlock->Deselect();
-
-					// Apply Capital Block bonus to current player
-					GameMode->ApplyCapitalBlockBonus();
-
 					// Set gamemode to next player turn
 					GameMode->NextTurn();
 				}
@@ -199,9 +186,6 @@ void AColourWarsBlock::IncreaseThisBlock()
 	// Add 1 score as part of this move
 	this->AddScore(1);
 
-	// Deselect the selected block
-	PlayerPawn->SelectedBlock->Deselect();
-
 	// Set gamemode to next player turn
 	GameMode->NextTurn();
 }
@@ -234,9 +218,6 @@ void AColourWarsBlock::CombineNeighbourBlocks()
 
 	if (moveMade)
 	{
-		// Deselect the selected block
-		PlayerPawn->SelectedBlock->Deselect();
-
 		// Set gamemode to next player turn
 		GameMode->NextTurn();
 	}
@@ -318,16 +299,15 @@ TArray<AColourWarsBlock*> AColourWarsBlock::GetNeighbouringBlocks()
 }
 
 /// <summary>
-/// Check if this block should have a bonus applied based on the changed block (ie. if it is a neighbour or not)
+/// Check if this block has created a square of same blocks and if so apply a completion bonus
 /// </summary>
-/// <param name="ChangedBlock"></param>
-void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
+void AColourWarsBlock::BonusCheck()
 {
 	TSet<AActor*> OverlappingActors;
 
 	// Reset the collision box back to the centre and normal size
-	ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-	ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+	this->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	this->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -335,25 +315,25 @@ void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
 		switch (i)
 		{
 			case 0:
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(100.f, 100.f, 0.f));
+				this->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+				this->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(100.f, 100.f, 0.f));
 			break;
 			case 1:
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(-100.f, 100.f, 0.f));
+				this->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+				this->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(-100.f, 100.f, 0.f));
 			break;
 			case 2:
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(-100.f, -100.f, 0.f));
+				this->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+				this->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(-100.f, -100.f, 0.f));
 			break;
 			case 3:
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-				ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(100.f, -100.f, 0.f));
+				this->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+				this->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(100.f, -100.f, 0.f));
 			break;
 		}
 
 		// Get all actors that the selected block overlaps
-		ChangedBlock->GetOverlappingActors(OverlappingActors);
+		this->GetOverlappingActors(OverlappingActors);
 
 		int32 blocksFound = 0;
 		bool AllBlocksSame = true;
@@ -365,7 +345,7 @@ void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
 				blocksFound++;
 
 				// Check if this block type is the same as others
-				if (block->BlockType != ChangedBlock->BlockType)
+				if (block->BlockType != this->BlockType)
 				{
 					AllBlocksSame = false;
 				}
@@ -386,7 +366,7 @@ void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
 			}
 
 			// And add 1 to changed block too
-			ChangedBlock->AddScore(1);
+			this->AddScore(1);
 		}
 		else
 		{
@@ -398,8 +378,8 @@ void AColourWarsBlock::BonusCheck(AColourWarsBlock* ChangedBlock)
 	}
 
 	// Reset the collision box back to the centre and normal size
-	ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-	ChangedBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+	this->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	this->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
 }
 
 /// <summary>
@@ -472,7 +452,15 @@ void AColourWarsBlock::UnsetCapitalBlock()
 /// </summary>
 void AColourWarsBlock::ApplyCapitalBlockBonus()
 {
-	
+	TArray<AColourWarsBlock*> neighbours = OwningGrid->GetNeighbours(this);
+
+	for (int32 blockIndex = 0; blockIndex < neighbours.Num(); blockIndex++)
+	{
+		if (neighbours[blockIndex]->BlockType == this->BlockType)
+		{
+			neighbours[blockIndex]->AddScore(1);
+		}
+	}
 }
 
 /// <summary>

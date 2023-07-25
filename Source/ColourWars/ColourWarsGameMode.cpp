@@ -49,6 +49,11 @@ AColourWarsGameMode::AColourWarsGameMode()
 
 void AColourWarsGameMode::NextTurn()
 {
+	ApplyCapitalBlockBonus();
+
+	// Deselect the selected block
+	GameGrid->PlayerPawn->SelectedBlock->Deselect();
+
 	GameGrid->UpdateScore();
 
 	// Switch current player block type to next type
@@ -88,12 +93,7 @@ void AColourWarsGameMode::IncrementPlayer()
 
 void AColourWarsGameMode::ApplyCapitalBlockBonus()
 {
-	//int32 playerInt = static_cast<int32>(CurrentPlayer);
-
-	//if (GameGrid->PlayerPawn->SelectedBlock->bIsCapitalBlock)
-	//{
-		//GameGrid->PlayerPawn->SelectedBlock->ApplyCapitalBlockBonus();
-	//}
+	GameGrid->ApplyCapitalBlocksBonus();
 }
 
 void AColourWarsGameMode::EndGame(eBlockType BlockType)

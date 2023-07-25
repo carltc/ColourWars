@@ -112,7 +112,7 @@ public:
 
 	bool NeighbourCheck(AColourWarsBlock* OtherBlock, eNeighbourCheckType CheckType);
 	
-	void BonusCheck(AColourWarsBlock* ChangedBlock);
+	void BonusCheck();
 
 	void Select();
 

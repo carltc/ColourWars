@@ -72,6 +72,9 @@ public:
 	/** Set the starting capital blocks for each player */
 	void SetCapitalBlocks();
 	
+	/** Apply the bonus for all capital blocks of the currert player block type on the grid */
+	void ApplyCapitalBlocksBonus();
+
 	/** Handle the block being clicked */
 	void DeselectAllOtherBlocks();
 	
@@ -100,7 +103,7 @@ public:
 	int ToGridIndex(GridCoord GridCoord);
 
 	/** Get all neighbour blocks to the central block */
-	TArray<AColourWarsBlock*> GetNeighbours(AColourWarsBlock CentralBlock);
+	TArray<AColourWarsBlock*> GetNeighbours(AColourWarsBlock* CentralBlock);
 
 	UFUNCTION(BlueprintCallable)
 		int32 GetGameGridSize();

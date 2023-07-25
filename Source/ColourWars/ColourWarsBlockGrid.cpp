@@ -191,6 +191,20 @@ void AColourWarsBlockGrid::SetCapitalBlocks()
 	}
 }
 
+/// <summary>
+/// Apply the bonus for all capital blocks of the currert player block type on the grid
+/// </summary>
+void AColourWarsBlockGrid::ApplyCapitalBlocksBonus()
+{
+	for (int32 blockIndex = 0; blockIndex < Blocks.Num(); blockIndex++)
+	{
+		if (Blocks[blockIndex]->bIsCapitalBlock && Blocks[blockIndex]->BlockType == PlayerPawn->SelectedBlock->BlockType)
+		{
+			Blocks[blockIndex]->ApplyCapitalBlockBonus();
+		}
+	}
+}
+
 void AColourWarsBlockGrid::DeselectAllOtherBlocks()
 {
 	PlayerPawn->SelectedBlock = nullptr;
@@ -264,7 +278,12 @@ eMoveType AColourWarsBlockGrid::MoveBlock(AColourWarsBlock* StartingBlock, AColo
 			EndingBlock->SetScore(StartingBlock->Score - attackingCost);
 			StartingBlock->SetScore(0);
 			EndingBlock->SetBlockType(StartingBlock->BlockType);
+			if (EndingBlock->bIsCapitalBlock)
+			{
+				EndingBlock->UnsetCapitalBlock();
+			}
 			moveType = eMoveType::Attacking;
+			EndingBlock->BonusCheck();
 		}
 
 		// Add a score to the starting block
@@ -375,7 +394,7 @@ GridCoord AColourWarsBlockGrid::ToGridCoord(int Index)
 /// <returns></returns>
 int AColourWarsBlockGrid::ToGridIndex(GridCoord GridCoord)
 {
-	return (GridCoord.Y * GameInstance->GameGridSize) + GridCoord.X;
+	return (GridCoord.X * GameInstance->GameGridSize) + GridCoord.Y;
 }
 
 /// <summary>
@@ -383,9 +402,38 @@ int AColourWarsBlockGrid::ToGridIndex(GridCoord GridCoord)
 /// </summary>
 /// <param name="CentralBlock"></param>
 /// <returns></returns>
-TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock CentralBlock)
+TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* CentralBlock)
 {
 	TArray<AColourWarsBlock*> neighbours;
+
+	GridCoord newGridCoord;
+	if (CentralBlock->GridCoord.X > 0)
+	{
+		newGridCoord = CentralBlock->GridCoord;
+		newGridCoord.X = CentralBlock->GridCoord.X - 1;
+		neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
+	}
+
+	if (CentralBlock->GridCoord.X < Size - 1)
+	{
+		newGridCoord = CentralBlock->GridCoord;
+		newGridCoord.X = CentralBlock->GridCoord.X + 1;
+		neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
+	}
+	
+	if (CentralBlock->GridCoord.Y > 0)
+	{
+		newGridCoord = CentralBlock->GridCoord;
+		newGridCoord.Y = CentralBlock->GridCoord.Y - 1;
+		neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
+	}
+
+	if (CentralBlock->GridCoord.Y < Size - 1)
+	{
+		newGridCoord = CentralBlock->GridCoord;
+		newGridCoord.Y = CentralBlock->GridCoord.Y + 1;
+		neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
+	}
 
 	return neighbours;
 }
