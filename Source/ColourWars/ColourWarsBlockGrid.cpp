@@ -194,7 +194,7 @@ void AColourWarsBlockGrid::SetCapitalBlocks()
 
 		Blocks[ToGridIndex(StartingPositions[PlayerIndex - 1])]->SetBlockType(static_cast<eBlockType>(PlayerIndex));
 		Blocks[ToGridIndex(StartingPositions[PlayerIndex - 1])]->SetCapitalBlock();
-		Blocks[ToGridIndex(StartingPositions[PlayerIndex - 1])]->SetScore(1);
+		Blocks[ToGridIndex(StartingPositions[PlayerIndex - 1])]->SetScore(PlayerIndex);
 	}
 }
 

@@ -61,11 +61,11 @@ AColourWarsBlock::AColourWarsBlock()
 	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "{0}"), FText::AsNumber(Score)));
 	ScoreText->SetupAttachment(DummyRoot);
 	
-	// Add text static mesh component
+	// Add capital visual
 	CapitalBlockVisual = CreateDefaultSubobject<UTextRenderComponent>(TEXT("CaptialVisual0"));
 	CapitalBlockVisual->SetRelativeLocation(FVector(0.f, 0.f, 60.f));
 	CapitalBlockVisual->SetRelativeRotation(FRotator(90.f, 0.f, 180.f));
-	CapitalBlockVisual->SetRelativeScale3D(FVector(10.f, 10.f, 10.f));
+	CapitalBlockVisual->SetRelativeScale3D(FVector(1.f, 20.f, 15.f));
 	CapitalBlockVisual->VerticalAlignment = EVRTA_TextCenter;
 	CapitalBlockVisual->HorizontalAlignment = EHTA_Center;
 	CapitalBlockVisual->SetText("O");
