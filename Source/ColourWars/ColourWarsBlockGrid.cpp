@@ -97,19 +97,16 @@ void AColourWarsBlockGrid::BeginPlay()
 		//const float HalfSize = ((float)Size-1.0f)/2.0f;
 		const float Xcoord = BlockIndex/Size; // Divide by dimension
 		const float Ycoord = BlockIndex%Size; // Modulo gives remainder
-		//const float XOffset = ((BlockIndex/Size) * BlockSpacing) - (HalfSize * BlockSpacing); // Divide by dimension
-		//const float YOffset = ((BlockIndex%Size) * BlockSpacing) - (HalfSize * BlockSpacing); // Modulo gives remainder
 
 		// Get random blocktype
 		max = BlockTypes.Num();
 		int32 RandomIndex = rand() % max;
 
-		GridCoord newGridCoord;
-		newGridCoord.X = Xcoord;
-		newGridCoord.Y = Ycoord;
+		GridCoord newGridCoord = GridCoord(Xcoord, Ycoord);
 
 		// Spawn a block
-		SpawnNewBlock(BlockTypes[RandomIndex], newGridCoord);
+		//SpawnNewBlock(BlockTypes[RandomIndex], newGridCoord, 0);
+		SpawnNewBlock(eBlockType::None, newGridCoord, 0);
 
 		// Remove block type just used
 		BlockTypes.RemoveAt(RandomIndex);
@@ -169,25 +166,35 @@ void AColourWarsBlockGrid::SetCapitalBlocks()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Setting capital blocks."));
 
+	TArray<GridCoord> StartingPositions;
+	StartingPositions.Add(GridCoord(0, 0));
+	StartingPositions.Add(GridCoord(Size - 1, Size - 1));
+	StartingPositions.Add(GridCoord(0, Size - 1));
+	StartingPositions.Add(GridCoord(Size - 1, 0));
+
 	// Set capital block for each player
 	for (int32 PlayerIndex = 1; PlayerIndex < GameMode->GetNumberOfPlayers() + 1; PlayerIndex++)
 	{
-		// Get all blocks of this player type
-		TArray<AColourWarsBlock*> PlayerBlocks;
-		for (int32 BlockIndex = 0; BlockIndex < Blocks.Num(); BlockIndex++)
-		{
-			AColourWarsBlock* block = Blocks[BlockIndex];
+		//// Get all blocks of this player type
+		//TArray<AColourWarsBlock*> PlayerBlocks;
+		//for (int32 BlockIndex = 0; BlockIndex < Blocks.Num(); BlockIndex++)
+		//{
+		//	AColourWarsBlock* block = Blocks[BlockIndex];
 
-			// If block is same as player then add it to the player blocks
-			if ((int32)block->BlockType == PlayerIndex)
-			{
-				PlayerBlocks.Add(block);
-			}
-		}
+		//	// If block is same as player then add it to the player blocks
+		//	if ((int32)block->BlockType == PlayerIndex)
+		//	{
+		//		PlayerBlocks.Add(block);
+		//	}
+		//}
 
 		// Randomly select a player block to be the capital block
-		int32 RandomIndex = rand() % PlayerBlocks.Num();
-		PlayerBlocks[RandomIndex]->SetCapitalBlock();
+		//int32 RandomIndex = rand() % PlayerBlocks.Num();
+		//PlayerBlocks[RandomIndex]->SetCapitalBlock();
+
+		Blocks[ToGridIndex(StartingPositions[PlayerIndex - 1])]->SetBlockType(static_cast<eBlockType>(PlayerIndex));
+		Blocks[ToGridIndex(StartingPositions[PlayerIndex - 1])]->SetCapitalBlock();
+		Blocks[ToGridIndex(StartingPositions[PlayerIndex - 1])]->SetScore(1);
 	}
 }
 
@@ -216,7 +223,7 @@ void AColourWarsBlockGrid::DeselectAllOtherBlocks()
 	}
 }
 
-void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, GridCoord GridCoord)
+void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, GridCoord GridCoord, int32 startingScore)
 {
 	const float HalfSize = ((float)Size - 1.0f) / 2.0f;
 	const float XOffset = (GridCoord.X * BlockSpacing) - (HalfSize * BlockSpacing); // Divide by dimension
@@ -229,6 +236,7 @@ void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, GridCoord GridCoo
 	NewBlock->GridCoord = GridCoord;
 	NewBlock->GridLocation = WorldLocation;
 	NewBlock->SetActorScale3D(FVector(BlocksScale, BlocksScale, BlocksScale));
+	NewBlock->SetScore(startingScore);
 
 	// Tell the block about its owner
 	if (NewBlock != nullptr)
@@ -379,10 +387,7 @@ int32 AColourWarsBlockGrid::GetGameGridSize()
 /// <returns></returns>
 GridCoord AColourWarsBlockGrid::ToGridCoord(int Index)
 {
-	GridCoord gridCoord;
-
-	gridCoord.X = Index % GameInstance->GameGridSize;
-	gridCoord.Y = std::floor((double)(Index / GameInstance->GameGridSize));
+	GridCoord gridCoord = GridCoord(Index % GameInstance->GameGridSize, std::floor((double)(Index / GameInstance->GameGridSize)));
 
 	return gridCoord;
 }
@@ -406,7 +411,8 @@ TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* 
 {
 	TArray<AColourWarsBlock*> neighbours;
 
-	GridCoord newGridCoord;
+	GridCoord newGridCoord = GridCoord(0, 0);
+
 	if (CentralBlock->GridCoord.X > 0)
 	{
 		newGridCoord = CentralBlock->GridCoord;

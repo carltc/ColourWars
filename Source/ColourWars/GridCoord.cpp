@@ -7,6 +7,12 @@ GridCoord::GridCoord()
 {
 }
 
+GridCoord::GridCoord(int x, int y)
+{
+	X = x;
+	Y = y;
+}
+
 GridCoord::~GridCoord()
 {
 }

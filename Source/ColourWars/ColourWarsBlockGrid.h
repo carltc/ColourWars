@@ -79,7 +79,7 @@ public:
 	void DeselectAllOtherBlocks();
 	
 	/** Add a new block to the grid */
-	void SpawnNewBlock(eBlockType BlockType, GridCoord GridCoord);
+	void SpawnNewBlock(eBlockType BlockType, GridCoord GridCoord, int32 startingScore);
 
 	/** Remove this block from the grid */
 	void RemoveBlock(AColourWarsBlock* BlockToRemove);

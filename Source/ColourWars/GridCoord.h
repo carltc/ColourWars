@@ -11,6 +11,7 @@ class COLOURWARS_API GridCoord
 {
 public:
 	GridCoord();
+	GridCoord(int X, int Y);
 	~GridCoord();
 
 	int32 X;

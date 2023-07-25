@@ -28,7 +28,7 @@ AColourWarsBlock::AColourWarsBlock()
 	static FConstructorStatics ConstructorStatics;
 
 	// Set defaults
-	Score = 1;
+	Score = 0;
 	bIsCapitalBlock = false;
 	BlockType = eBlockType::None;
 
@@ -508,7 +508,7 @@ eMoveType AColourWarsBlock::MakeMove(AColourWarsBlock* OtherBlock)
 	}
 
 	// Spawn a new block into the old location
-	OwningGrid->SpawnNewBlock(OtherBlock->BlockType, OtherBlock->GridCoord);
+	OwningGrid->SpawnNewBlock(OtherBlock->BlockType, OtherBlock->GridCoord, 0);
 
 	// Place this block in location of other block
 	//OtherBlock->SetActorLocation(this->GridLocation);
