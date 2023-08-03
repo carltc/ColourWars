@@ -17,9 +17,6 @@ public:
 
 	virtual void CalcCamera(float DeltaTime, struct FMinimalViewInfo& OutResult) override;
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
-		class AColourWarsBlock* SelectedBlock;
-
 protected:
 
 };

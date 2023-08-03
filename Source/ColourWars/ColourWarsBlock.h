@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GridCoord.h"
+#include "IntVector.h"
 #include "ColourWarsBlock.generated.h"
 
 // Neighbour Check Type
@@ -31,8 +31,10 @@ UENUM(BlueprintType)
 enum class eMoveType : uint8
 {
 	Invalid     UMETA(DisplayName = "Invalid"),
-	Attacking   UMETA(DisplayName = "Attacking"),
-	Defensive   UMETA(DisplayName = "Defensive")
+	Attack      UMETA(DisplayName = "Attack"),
+	Move        UMETA(DisplayName = "Move"),
+	Combine     UMETA(DisplayName = "Combine"),
+	AddOne      UMETA(DisplayName = "AddOne")
 };
 
 /** A block that can be clicked */
@@ -41,6 +43,7 @@ class AColourWarsBlock : public AActor
 {
 	GENERATED_BODY()
 
+private:
 	/** Dummy root component */
 	UPROPERTY(Category = Block, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USceneComponent* DummyRoot;
@@ -60,7 +63,6 @@ class AColourWarsBlock : public AActor
 	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		class UBoxComponent* NeighbourCheck_CollisionBox;
 
-public:
 	AColourWarsBlock();
 
 	eBlockType BlockType;
@@ -68,6 +70,9 @@ public:
 	/** Has this block been selected */
 	bool bIsSelected;
 	
+	/** Is it possible to select this block? */
+	bool bIsSelectable;
+
 	/** Is this block the capital block of the owning player */
 	bool bIsCapitalBlock;
 	
@@ -75,7 +80,7 @@ public:
 	int32 Score;
 	
 	/** Grid coordinate of this block */
-	GridCoord GridCoord;
+	IntVector GridCoord;
 	
 	/** World location of block in grid */
 	FVector GridLocation;
@@ -92,6 +97,14 @@ public:
 	UPROPERTY()
 	class AColourWarsBlockGrid* OwningGrid;
 
+	/** Pointer to grey material used on block */
+	UPROPERTY()
+		class UMaterialInstance* BlockMaterial;
+	
+	/** Pointer to basic material used on score */
+	UPROPERTY()
+		class UMaterialInstanceDynamic* TextMaterial;
+
 	/** Handle the block being clicked */
 	UFUNCTION()
 	void BlockClicked(UPrimitiveComponent* ClickedComp, FKey ButtonClicked);
@@ -106,46 +119,65 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void CombineNeighbourBlocks();
 
-	void SetBlockType(eBlockType newBlockType);
-	
 	void HandleClicked();
 
-	bool NeighbourCheck(AColourWarsBlock* OtherBlock, eNeighbourCheckType CheckType);
-	
-	void BonusCheck();
+	/** Array of all blocks in grid */
+	TArray<AColourWarsBlock*> NeighbouringBlocks;
 
-	void Select();
+	void SetBlockColour();
 
-	void Deselect();
+public:
+
+	const static TMap<eBlockType, FVector> BlockColours;
+
+	/** Attempts to select this block via the GameState */
+	void TrySelect();
+
+	/** Attempts to select this block via the GameState */
+	void TryDeselect();
+
+	/** Set this block as selected */
+	void SetBlockSelected();
+
+	/** Set this block as deselected */
+	void SetBlockDeselected();
+
+	int32 GetScore();
 
 	void AddScore(int32 ScoreToAdd);
 	
 	void SetScore(int32 ScoreToSet);
+
+	eBlockType GetBlockType();
 	
+	void SetBlockType(eBlockType newBlockType);
+
+	bool IsCapitalBlock();
+
 	void SetCapitalBlock();
 	
 	void UnsetCapitalBlock();
 
+	IntVector GetGridCoord();
+
+	void SetGridCoord(IntVector gridCoord);
+
+	FVector GetGridLocation();
+
+	void SetGridLocation(FVector gridLocation);
+
+	AColourWarsBlockGrid* GetOwningGrid();
+
+	void SetOwningGrid(AColourWarsBlockGrid* grid);
+
 	void ApplyCapitalBlockBonus();
 
-	bool ValidMove(AColourWarsBlock* OtherBlock);
-	
-	eMoveType MakeMove(AColourWarsBlock* OtherBlock);
-	
-	bool CanDefeat(AColourWarsBlock* DefendingBlock);
-	
+	void BonusCheck();
+
 	int32 AttackingCost(AColourWarsBlock* DefendingBlock);
 
-	/** Get Neighbouring blocks */
-	TArray<AColourWarsBlock*> GetNeighbouringBlocks();
+	void SetBlockSelectable(bool Selectable);
 
-private:
-	/** Array of all blocks in grid */
-	TArray<AColourWarsBlock*> NeighbouringBlocks;
-
-	void SetBlockMaterial();
-
-public:
 	/** Returns DummyRoot subobject **/
 	FORCEINLINE class USceneComponent* GetDummyRoot() const { return DummyRoot; }
 	/** Returns BlockMesh subobject **/

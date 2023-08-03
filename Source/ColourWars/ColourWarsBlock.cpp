@@ -14,14 +14,27 @@
 
 #define LOCTEXT_NAMESPACE "PuzzleBlockGrid"
 
+const TMap<eBlockType, FVector> AColourWarsBlock::BlockColours
+{
+	{eBlockType::None,   FVector( 1.0f  , 0.9f , 0.2f )},
+	{eBlockType::Red,    FVector( 1.0f  , 0    , 0    )},
+	{eBlockType::Green,  FVector( 0     , 1.0f , 0    )},
+	{eBlockType::Blue,   FVector( 0     , 0    , 1.0f )},
+	{eBlockType::Purple, FVector( 0.25f , 0    , 1.0f )}
+};
+
 AColourWarsBlock::AColourWarsBlock()
 {
 	// Structure to hold one-time initialization
 	struct FConstructorStatics
 	{
 		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
+		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> BlockMaterial;
+		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> TextMaterial;
 		FConstructorStatics()
 			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
+			, BlockMaterial(TEXT("/Game/Puzzle/Meshes/BlockMaterial_Inst.BlockMaterial_Inst"))
+			, TextMaterial(TEXT("/Game/Puzzle/Meshes/TextMaterial_Inst.TextMaterial_Inst"))
 		{
 		}
 	};
@@ -31,6 +44,8 @@ AColourWarsBlock::AColourWarsBlock()
 	Score = 0;
 	bIsCapitalBlock = false;
 	BlockType = eBlockType::None;
+	BlockMaterial = ConstructorStatics.BlockMaterial.Get();
+	TextMaterial = UMaterialInstanceDynamic::Create(ConstructorStatics.TextMaterial.Get(), NULL);
 
 	// Set the player pawn
 	PlayerPawn = Cast<AColourWarsPawn>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
@@ -50,6 +65,7 @@ AColourWarsBlock::AColourWarsBlock()
 	BlockMesh->SetupAttachment(DummyRoot);
 	BlockMesh->OnClicked.AddDynamic(this, &AColourWarsBlock::BlockClicked);
 	BlockMesh->OnInputTouchBegin.AddDynamic(this, &AColourWarsBlock::OnFingerPressedBlock);
+	BlockMesh->SetMaterial(0, BlockMaterial);
 
 	// Add text static mesh component
 	ScoreText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("ScoreText0"));
@@ -60,6 +76,7 @@ AColourWarsBlock::AColourWarsBlock()
 	ScoreText->HorizontalAlignment = EHTA_Center;
 	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "{0}"), FText::AsNumber(Score)));
 	ScoreText->SetupAttachment(DummyRoot);
+	ScoreText->SetMaterial(0, TextMaterial);
 	
 	// Add capital visual
 	CapitalBlockVisual = CreateDefaultSubobject<UTextRenderComponent>(TEXT("CaptialVisual0"));
@@ -81,11 +98,12 @@ AColourWarsBlock::AColourWarsBlock()
 }
 
 /// <summary>
-/// Set the material of this block
+/// Get the BlockType of this block
 /// </summary>
-void AColourWarsBlock::SetBlockMaterial()
+/// <returns></returns>
+eBlockType AColourWarsBlock::GetBlockType()
 {
-	BlockMesh->SetMaterial(0, GameMode->GetPlayerColour(BlockType));
+	return BlockType;
 }
 
 /// <summary>
@@ -96,7 +114,7 @@ void AColourWarsBlock::SetBlockType(eBlockType newBlockType)
 {
 	BlockType = newBlockType;
 
-	SetBlockMaterial();
+	SetBlockColour();
 }
 
 /// <summary>
@@ -116,7 +134,7 @@ void AColourWarsBlock::BlockClicked(UPrimitiveComponent* ClickedComp, FKey Butto
 /// <param name="TouchedComponent"></param>
 void AColourWarsBlock::OnFingerPressedBlock(ETouchIndex::Type FingerIndex, UPrimitiveComponent* TouchedComponent)
 {
-	if (!GameMode->GameOver)
+	if (!GameMode->GetGameState()->GetGameOver())
 	{
 		HandleClicked();
 	}
@@ -131,50 +149,20 @@ void AColourWarsBlock::OnFingerPressedBlock(ETouchIndex::Type FingerIndex, UPrim
 /// </summary>
 void AColourWarsBlock::HandleClicked()
 {
-	// Check we are not already active
-	if (!bIsSelected)
+	// Check if this block can be selected
+	if (!bIsSelectable)
 	{
-		// Check that a block has been selected
-		if (PlayerPawn->SelectedBlock != nullptr)
-		{
-			// Check that this block, that was clicked on, is overlapped by the collision box of the selected block
-			if (NeighbourCheck(PlayerPawn->SelectedBlock, eNeighbourCheckType::Horizontal)
-				|| NeighbourCheck(PlayerPawn->SelectedBlock, eNeighbourCheckType::Vertical))
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Attempting block move."));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("This block cannot be selected."));
+		return;
+	}
 
-				eMoveType MoveType = OwningGrid->MoveBlock(PlayerPawn->SelectedBlock, this);
-
-				if (MoveType == eMoveType::Invalid)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Invalid moved attempted."));
-				}
-				else
-				{
-					// Set gamemode to next player turn
-					GameMode->NextTurn();
-				}
-				return;
-			}
-			else
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("This block is not a neighbour of the selected block."));
-			}
-		}
-
-		// If nothing selected then select this block
-		// Check if this block is the correct one for the current player
-		if (GameMode->CurrentPlayer == BlockType)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Unselecting all and seleting this block."));
-			OwningGrid->DeselectAllOtherBlocks();
-			this->Select();
-		}
+	if (bIsSelected)
+	{
+		this->TryDeselect();
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Deselecting block."));
-		this->Deselect();
+		this->TrySelect();
 	}
 }
 
@@ -221,81 +209,6 @@ void AColourWarsBlock::CombineNeighbourBlocks()
 		// Set gamemode to next player turn
 		GameMode->NextTurn();
 	}
-}
-
-/// <summary>
-/// Check if the other block is a neighbour of this block based on the check direction (check type)
-/// </summary>
-/// <param name="OtherBlock"></param>
-/// <param name="CheckType"></param>
-/// <returns></returns>
-bool AColourWarsBlock::NeighbourCheck(AColourWarsBlock* OtherBlock, eNeighbourCheckType CheckType)
-{
-	TSet<AActor*> OverlappingActors;
-
-	// Reset the collision box back to the centre and normal size
-	OtherBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-	OtherBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-
-	switch (CheckType)
-	{
-		case eNeighbourCheckType::Vertical:
-			// Make the collision box large vertically
-			OtherBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(2.f, 1.f, 1.f));
-			break;
-		case eNeighbourCheckType::Horizontal:
-			// Make the collision box large horizontally
-			OtherBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 2.f, 1.f));
-			break;
-	}
-
-	// Get all actors that the selected block overlaps
-	OtherBlock->GetOverlappingActors(OverlappingActors);
-
-	// Reset the collision box back to the centre and normal size
-	OtherBlock->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-	OtherBlock->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-
-	// Check that this block, that was clicked on, is overlapped by the collision box of the selected block
-	if (OverlappingActors.Contains(this))
-	{
-		return true;
-	}
-
-	return false;
-}
-
-TArray<AColourWarsBlock*> AColourWarsBlock::GetNeighbouringBlocks()
-{
-	TSet<AActor*> OverlappingActors;
-	TSet<AActor*> HorizontalOverlappingActors;
-	TArray<AColourWarsBlock*> OverlappingBlocks;
-
-	// Reset the collision box back to the centre and normal size
-	NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-	NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-
-	// Make the collision box large vertically
-	NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(2.f, 1.f, 1.f));
-
-	// Get all actors that the selected block overlaps
-	GetOverlappingActors(OverlappingActors);
-	
-	// Make the collision box large horizontally
-	NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 2.f, 1.f));
-
-	// Get all actors that the selected block overlaps
-	GetOverlappingActors(HorizontalOverlappingActors);
-	OverlappingActors.Append(HorizontalOverlappingActors);
-
-	for (AActor* actor : OverlappingActors)
-	{
-		AColourWarsBlock* block = Cast<AColourWarsBlock>(actor);
-		
-		OverlappingBlocks.Add(block);
-	}
-
-	return OverlappingBlocks;
 }
 
 /// <summary>
@@ -385,23 +298,41 @@ void AColourWarsBlock::BonusCheck()
 /// <summary>
 /// Select this block
 /// </summary>
-void AColourWarsBlock::Select()
+void AColourWarsBlock::TrySelect()
 {
-	PlayerPawn->SelectedBlock = this;
-	bIsSelected = true;
-
-	this->AddActorLocalOffset(FVector(0.f, 0.f, 100.f));
+	GameMode->GetGameState()->SelectBlock(this);
 }
 
 /// <summary>
-/// Deselect this block
+/// Attempt to deselect this block via GameState
 /// </summary>
-void AColourWarsBlock::Deselect()
+void AColourWarsBlock::TryDeselect()
 {
-	PlayerPawn->SelectedBlock = nullptr;
-	bIsSelected = false;
+	GameMode->GetGameState()->DeselectBlock(this);
+}
 
+/// <summary>
+/// Set this block as selected
+/// </summary>
+void AColourWarsBlock::SetBlockSelected()
+{
+	bIsSelected = true;
+	this->AddActorLocalOffset(FVector(0.f, 0.f, 100.f));
+}
+
+void AColourWarsBlock::SetBlockDeselected()
+{
+	bIsSelected = false;
 	this->SetActorLocation(GridLocation);
+}
+
+/// <summary>
+/// Get the Score of this block
+/// </summary>
+/// <returns></returns>
+int32 AColourWarsBlock::GetScore()
+{
+	return Score;
 }
 
 /// <summary>
@@ -430,6 +361,15 @@ void AColourWarsBlock::SetScore(int32 ScoreToSet)
 }
 
 /// <summary>
+/// Is this block a Capital Block
+/// </summary>
+/// <returns></returns>
+bool AColourWarsBlock::IsCapitalBlock()
+{
+	return bIsCapitalBlock;
+}
+
+/// <summary>
 /// Set this block as a capital block
 /// </summary>
 void AColourWarsBlock::SetCapitalBlock()
@@ -447,6 +387,36 @@ void AColourWarsBlock::UnsetCapitalBlock()
 	CapitalBlockVisual->SetVisibility(false);
 }
 
+IntVector AColourWarsBlock::GetGridCoord()
+{
+	return GridCoord;
+}
+
+void AColourWarsBlock::SetGridCoord(IntVector gridCoord)
+{
+	GridCoord = gridCoord;
+}
+
+FVector AColourWarsBlock::GetGridLocation()
+{
+	return GridLocation;
+}
+
+void AColourWarsBlock::SetGridLocation(FVector gridLocation)
+{
+	GridLocation = gridLocation;
+}
+
+AColourWarsBlockGrid* AColourWarsBlock::GetOwningGrid()
+{
+	return OwningGrid;
+}
+
+void AColourWarsBlock::SetOwningGrid(AColourWarsBlockGrid* grid)
+{
+	OwningGrid = grid;
+}
+
 /// <summary>
 /// Set the Capital block bonus based on this block as the capital block
 /// </summary>
@@ -461,85 +431,6 @@ void AColourWarsBlock::ApplyCapitalBlockBonus()
 			neighbours[blockIndex]->AddScore(1);
 		}
 	}
-}
-
-/// <summary>
-/// Is the move for this block to take the other block valid?
-/// </summary>
-/// <param name="OtherBlock"></param>
-/// <returns></returns>
-bool AColourWarsBlock::ValidMove(AColourWarsBlock* OtherBlock)
-{
-	if (this->BlockType == OtherBlock->BlockType)
-	{
-		return true;
-	}
-	else
-	{
-		// Check if the 'attacking' block has enough score to 'take' the other block
-		if (OtherBlock->CanDefeat(this))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-/// <summary>
-/// Make the move for this block to be taken by the other block
-/// </summary>
-/// <param name="OtherBlock"></param>
-/// <returns></returns>
-eMoveType AColourWarsBlock::MakeMove(AColourWarsBlock* OtherBlock)
-{
-	eMoveType MoveType = eMoveType::Defensive;
-
-	// If blocks are same type then join scores
-	if (this->BlockType == OtherBlock->BlockType)
-	{
-		OtherBlock->AddScore(this->Score);
-		MoveType = eMoveType::Defensive;
-	}
-	else
-	{
-		OtherBlock->AddScore(-OtherBlock->AttackingCost(this));
-		MoveType = eMoveType::Attacking;
-	}
-
-	// Spawn a new block into the old location
-	OwningGrid->SpawnNewBlock(OtherBlock->BlockType, OtherBlock->GridCoord, 0);
-
-	// Place this block in location of other block
-	//OtherBlock->SetActorLocation(this->GridLocation);
-	//OtherBlock->GridLocation = this->GridLocation;
-
-	// Move capital status if this block is capital block
-	if (this->bIsCapitalBlock)
-	{
-		OtherBlock->SetCapitalBlock();
-	}
-
-	OwningGrid->RemoveBlock(this);
-	// Finally destroy this block as it was 'taken'
-	this->Destroy();
-
-	return MoveType;
-}
-
-/// <summary>
-/// Check if this block can take the defending block
-/// </summary>
-/// <param name="DefendingBlock"></param>
-/// <returns></returns>
-bool AColourWarsBlock::CanDefeat(AColourWarsBlock* DefendingBlock)
-{
-	if (this->Score > this->AttackingCost(DefendingBlock))
-	{
-		return true;
-	}
-
-	return false;
 }
 
 /// <summary>
@@ -610,3 +501,26 @@ int32 AColourWarsBlock::AttackingCost(AColourWarsBlock* DefendingBlock)
 
 	return false;
 }
+
+void AColourWarsBlock::SetBlockSelectable(bool Selectable)
+{
+	bIsSelectable = Selectable;
+
+	if (bIsSelectable)
+	{
+		BlockMesh->SetScalarParameterValueOnMaterials("GreyingOut", 0);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Block set as Selectable."));
+	}
+	else
+	{
+		BlockMesh->SetScalarParameterValueOnMaterials("GreyingOut", 0.5);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Block set as Unselectable."));
+	}
+}
+
+void AColourWarsBlock::SetBlockColour()
+{
+	BlockMesh->SetVectorParameterValueOnMaterials("Colour", BlockColours[BlockType]);
+}
+
+

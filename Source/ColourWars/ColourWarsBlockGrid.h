@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ColourWarsBlock.h"
-#include "GridCoord.h"
+#include "IntVector.h"
 #include "ColourWarsBlockGrid.generated.h"
 
 /** Class used to spawn blocks and manage score */
@@ -25,9 +25,6 @@ class AColourWarsBlockGrid : public AActor
 
 public:
 	AColourWarsBlockGrid();
-
-	/** How many blocks have been clicked */
-	int32 Score;
 
 	/** Spacing of blocks */
 	UPROPERTY(Category=Grid, EditAnywhere, BlueprintReadOnly)
@@ -59,7 +56,6 @@ private:
 	/** Block sizes */
 	float BlocksScale = 1.f;
 
-
 protected:
 	// Begin AActor interface
 	virtual void BeginPlay() override;
@@ -75,11 +71,11 @@ public:
 	/** Apply the bonus for all capital blocks of the currert player block type on the grid */
 	void ApplyCapitalBlocksBonus();
 
-	/** Handle the block being clicked */
-	void DeselectAllOtherBlocks();
+	/** Deselect all blocks */
+	void DeselectAllBlocks();
 	
 	/** Add a new block to the grid */
-	void SpawnNewBlock(eBlockType BlockType, GridCoord GridCoord, int32 startingScore);
+	void SpawnNewBlock(eBlockType BlockType, IntVector GridCoord, int32 startingScore);
 
 	/** Remove this block from the grid */
 	void RemoveBlock(AColourWarsBlock* BlockToRemove);
@@ -97,10 +93,20 @@ public:
 	bool IsValidMove(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock);
 
 	/** Convert an index value to a grid coordinate */
-	GridCoord ToGridCoord(int Index);
+	IntVector ToGridCoord(int Index);
 	
 	/** Convert an index value to a grid coordinate */
-	int ToGridIndex(GridCoord GridCoord);
+	int ToGridIndex(IntVector GridCoord);
+
+	void SetSelectableBlocks(eMoveType MoveType, AColourWarsBlock* SelectedBlock);
+
+	void UnsetAllSelectableBlocks();
+
+	void SetPlayerTurnMeshColour();
+
+	bool CanDefeat(AColourWarsBlock* AttackingBlock, AColourWarsBlock* DefendingBlock);
+
+	bool ValidMove(AColourWarsBlock* Block, AColourWarsBlock* OtherBlock);
 
 	/** Get all neighbour blocks to the central block */
 	TArray<AColourWarsBlock*> GetNeighbours(AColourWarsBlock* CentralBlock);

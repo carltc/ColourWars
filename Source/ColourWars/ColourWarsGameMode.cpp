@@ -6,55 +6,35 @@
 #include "ColourWarsPlayerController.h"
 #include "ColourWarsGameInstance.h"
 #include "ColourWarsPawn.h"
+#include "ColourWarsGameState.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
 AColourWarsGameMode::AColourWarsGameMode()
 {
-	// Structure to hold one-time initialization
-	struct FConstructorStatics
-	{
-		ConstructorHelpers::FObjectFinderOptional<UMaterial> BaseMaterial;
-		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> RedMaterial;
-		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> GreenMaterial;
-		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> BlueMaterial;
-		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> PurpleMaterial;
-		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> OrangeMaterial;
-		FConstructorStatics()
-			: BaseMaterial(TEXT("/Game/Puzzle/Meshes/BaseMaterial.BaseMaterial"))
-			, RedMaterial(TEXT("/Game/Puzzle/Meshes/RedMaterial.RedMaterial"))
-			, GreenMaterial(TEXT("/Game/Puzzle/Meshes/GreenMaterial.GreenMaterial"))
-			, BlueMaterial(TEXT("/Game/Puzzle/Meshes/BlueMaterial.BlueMaterial"))
-			, PurpleMaterial(TEXT("/Game/Puzzle/Meshes/PurpleMaterial.PurpleMaterial"))
-			, OrangeMaterial(TEXT("/Game/Puzzle/Meshes/OrangeMaterial.OrangeMaterial"))
-		{
-		}
-	};
-	static FConstructorStatics ConstructorStatics;
-
-	// Save a pointer to the orange material
-	BaseMaterial = ConstructorStatics.BaseMaterial.Get();
-	RedMaterial = ConstructorStatics.RedMaterial.Get();
-	GreenMaterial = ConstructorStatics.GreenMaterial.Get();
-	BlueMaterial = ConstructorStatics.BlueMaterial.Get();
-	PurpleMaterial = ConstructorStatics.PurpleMaterial.Get();
-	OrangeMaterial = ConstructorStatics.OrangeMaterial.Get();
-
 	// no pawn by default
 	DefaultPawnClass = AColourWarsPawn::StaticClass();
 	// use our own player controller class
 	PlayerControllerClass = AColourWarsPlayerController::StaticClass();
+	// use our own game state class
+	GameStateClass = AColourWarsGameState::StaticClass();
+}
 
+void AColourWarsGameMode::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 void AColourWarsGameMode::NextTurn()
 {
+	GameState->MakeMove();
+
 	ApplyCapitalBlockBonus();
 
-	// Deselect the selected block
-	GameGrid->PlayerPawn->SelectedBlock->Deselect();
+	// Deselect the selected blocks
+	GameState->DeselectAllBlocks();
 
-	GameGrid->UpdateScore();
+	GameState->GetGameGrid()->UpdateScore();
 
 	// Switch current player block type to next type
 	IncrementPlayer();
@@ -62,8 +42,8 @@ void AColourWarsGameMode::NextTurn()
 
 void AColourWarsGameMode::IncrementPlayer()
 {
-	int32 playerInt = static_cast<int32>(CurrentPlayer);
-	int32 previousPlayerInt = static_cast<int32>(CurrentPlayer);
+	int32 playerInt = static_cast<int32>(GameState->GetCurrentPlayer());
+	int32 previousPlayerInt = static_cast<int32>(GameState->GetCurrentPlayer());
 
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Setting next player."));
 
@@ -77,28 +57,35 @@ void AColourWarsGameMode::IncrementPlayer()
 			playerInt = 1;
 		}
 
-		CurrentPlayer = static_cast<eBlockType>(playerInt);
-	} while (!GameGrid->HasBlocks(CurrentPlayer));
+		GameState->SetCurrentPlayer(static_cast<eBlockType>(playerInt));
+	} while (!GameState->GetGameGrid()->HasBlocks(GameState->GetCurrentPlayer()));
 
 	// If it is still the same players turn after incrementing this means that it is the only player left
-	if (previousPlayerInt == static_cast<int32>(CurrentPlayer))
+	if (previousPlayerInt == static_cast<int32>(GameState->GetCurrentPlayer()))
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Game over."));
-		EndGame(CurrentPlayer);
+		EndGame(GameState->GetCurrentPlayer());
 	}
 
 	// Set the player turn mesh
-	GameGrid->PlayerTurnMesh->SetMaterial(0, GetPlayerColour(CurrentPlayer));
+	GameState->GetGameGrid()->SetPlayerTurnMeshColour();
+
+	GameState->RefreshGameGrid();
 }
 
 void AColourWarsGameMode::ApplyCapitalBlockBonus()
 {
-	GameGrid->ApplyCapitalBlocksBonus();
+	GameState->GetGameGrid()->ApplyCapitalBlocksBonus();
 }
 
 void AColourWarsGameMode::EndGame(eBlockType BlockType)
 {
-	GameOver = true;
+	GetGameState()->SetGameOver(true);
+}
+
+void AColourWarsGameMode::SetGameGrid(AColourWarsBlockGrid* grid)
+{
+	GameState->SetGameGrid(grid);
 }
 
 int32 AColourWarsGameMode::GetNumberOfPlayers()
@@ -116,19 +103,25 @@ int32 AColourWarsGameMode::GetNumberOfPlayers()
 	return NumberOfPlayers;
 }
 
-class UMaterialInstance* AColourWarsGameMode::GetPlayerColour(eBlockType BlockType)
+AColourWarsGameState* AColourWarsGameMode::GetGameState()
 {
-	switch (BlockType)
+	if (GameState == nullptr)
 	{
-		case eBlockType::Red:
-			return RedMaterial;
-		case eBlockType::Green:
-			return GreenMaterial;
-		case eBlockType::Blue:
-			return BlueMaterial;
-		case eBlockType::Purple:
-			return PurpleMaterial;
+		// Set the gamemode
+		GameState = Cast<AColourWarsGameState>(UGameplayStatics::GetGameState(GetWorld()));
 	}
 
-	return OrangeMaterial;
+	return GameState;
 }
+
+void AColourWarsGameMode::BeginGame()
+{
+	GameState->SetCurrentPlayer(eBlockType::Red);
+
+	GameState->DeselectAllBlocks();
+
+	GameState->SetSelectedMove(eMoveType::Invalid);
+
+	GameState->RefreshGameGrid();
+}
+

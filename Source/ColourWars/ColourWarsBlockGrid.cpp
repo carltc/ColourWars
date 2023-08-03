@@ -5,7 +5,7 @@
 #include "ColourWarsPawn.h"
 #include "ColourWarsGameMode.h"
 #include "ColourWarsGameInstance.h"
-#include "GridCoord.h"
+#include "IntVector.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/World.h"
 #include "cmath"
@@ -19,8 +19,10 @@ AColourWarsBlockGrid::AColourWarsBlockGrid()
 	struct FConstructorStatics
 	{
 		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
+		ConstructorHelpers::FObjectFinderOptional<UMaterialInstance> BlockMaterial;
 		FConstructorStatics()
 			: PlaneMesh(TEXT("/Game/Puzzle/Meshes/PuzzleCube.PuzzleCube"))
+			, BlockMaterial(TEXT("/Game/Puzzle/Meshes/BlockMaterial_Inst.BlockMaterial_Inst"))
 		{
 		}
 	};
@@ -47,6 +49,7 @@ AColourWarsBlockGrid::AColourWarsBlockGrid()
 	PlayerTurnMesh->SetRelativeScale3D(FVector(1.f, 6.f, 0.2f));
 	PlayerTurnMesh->SetRelativeLocation(FVector(-911.f, 0.f, 0.f));
 	PlayerTurnMesh->SetupAttachment(DummyRoot);
+	PlayerTurnMesh->SetMaterial(0, ConstructorStatics.BlockMaterial.Get());
 }
 
 void AColourWarsBlockGrid::BeginPlay()
@@ -58,11 +61,7 @@ void AColourWarsBlockGrid::BeginPlay()
 
 	// Set the gamemode
 	GameMode = Cast<AColourWarsGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-	GameMode->GameGrid = this;
-
-	// Set the playerturn mesh to the starting player colour
-	PlayerTurnMesh->SetMaterial(0, GameMode->RedMaterial);
-
+	
 	// Number of blocks
 	GetGameGridSize();
 	const int32 NumBlocks = Size * Size;
@@ -102,7 +101,7 @@ void AColourWarsBlockGrid::BeginPlay()
 		max = BlockTypes.Num();
 		int32 RandomIndex = rand() % max;
 
-		GridCoord newGridCoord = GridCoord(Xcoord, Ycoord);
+		IntVector newGridCoord = IntVector(Xcoord, Ycoord);
 
 		// Spawn a block
 		//SpawnNewBlock(BlockTypes[RandomIndex], newGridCoord, 0);
@@ -116,6 +115,14 @@ void AColourWarsBlockGrid::BeginPlay()
 	this->SetCapitalBlocks();
 
 	this->UpdateScore();
+
+	// Set the game grid as this newly created grid
+	GameMode->GetGameState()->SetGameGrid(this);
+
+	// Set the playerturn mesh to the starting player colour
+	SetPlayerTurnMeshColour();
+
+	GameMode->BeginGame();
 }
 
 void AColourWarsBlockGrid::UpdateScore()
@@ -130,19 +137,19 @@ void AColourWarsBlockGrid::UpdateScore()
 	for (int32 BlockIndex = 0; BlockIndex < Blocks.Num(); BlockIndex++)
 	{
 		AColourWarsBlock* block = Blocks[BlockIndex];
-		switch (block->BlockType)
+		switch (block->GetBlockType())
 		{
 			case eBlockType::Red:
-				redScore += block->Score;
+				redScore += block->GetScore();
 				break;
 			case eBlockType::Green:
-				greenScore += block->Score;
+				greenScore += block->GetScore();
 				break;
 			case eBlockType::Blue:
-				blueScore += block->Score;
+				blueScore += block->GetScore();
 				break;
 			case eBlockType::Purple:
-				purpleScore += block->Score;
+				purpleScore += block->GetScore();
 				break;
 		}
 	}
@@ -166,11 +173,11 @@ void AColourWarsBlockGrid::SetCapitalBlocks()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Setting capital blocks."));
 
-	TArray<GridCoord> StartingPositions;
-	StartingPositions.Add(GridCoord(0, 0));
-	StartingPositions.Add(GridCoord(Size - 1, Size - 1));
-	StartingPositions.Add(GridCoord(0, Size - 1));
-	StartingPositions.Add(GridCoord(Size - 1, 0));
+	TArray<IntVector> StartingPositions;
+	StartingPositions.Add(IntVector(0, 0));
+	StartingPositions.Add(IntVector(Size - 1, Size - 1));
+	StartingPositions.Add(IntVector(0, Size - 1));
+	StartingPositions.Add(IntVector(Size - 1, 0));
 
 	// Set capital block for each player
 	for (int32 PlayerIndex = 1; PlayerIndex < GameMode->GetNumberOfPlayers() + 1; PlayerIndex++)
@@ -205,25 +212,22 @@ void AColourWarsBlockGrid::ApplyCapitalBlocksBonus()
 {
 	for (int32 blockIndex = 0; blockIndex < Blocks.Num(); blockIndex++)
 	{
-		if (Blocks[blockIndex]->bIsCapitalBlock && Blocks[blockIndex]->BlockType == PlayerPawn->SelectedBlock->BlockType)
+		if (Blocks[blockIndex]->IsCapitalBlock() && Blocks[blockIndex]->GetBlockType() == GameMode->GetGameState()->GetSelectedBlock()->GetBlockType())
 		{
 			Blocks[blockIndex]->ApplyCapitalBlockBonus();
 		}
 	}
 }
 
-void AColourWarsBlockGrid::DeselectAllOtherBlocks()
+void AColourWarsBlockGrid::DeselectAllBlocks()
 {
-	PlayerPawn->SelectedBlock = nullptr;
-
-	for (int32 BlockIndex = 0; BlockIndex < Blocks.Num(); BlockIndex++)
+	for (AColourWarsBlock* block : Blocks)
 	{
-		AColourWarsBlock* block = Blocks[BlockIndex];
-		block->Deselect();
+		block->TryDeselect();
 	}
 }
 
-void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, GridCoord GridCoord, int32 startingScore)
+void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, IntVector GridCoord, int32 startingScore)
 {
 	const float HalfSize = ((float)Size - 1.0f) / 2.0f;
 	const float XOffset = (GridCoord.X * BlockSpacing) - (HalfSize * BlockSpacing); // Divide by dimension
@@ -233,15 +237,15 @@ void AColourWarsBlockGrid::SpawnNewBlock(eBlockType BlockType, GridCoord GridCoo
 
 	// Spawn a block
 	AColourWarsBlock* NewBlock = GetWorld()->SpawnActor<AColourWarsBlock>(WorldLocation, FRotator(0, 0, 0));
-	NewBlock->GridCoord = GridCoord;
-	NewBlock->GridLocation = WorldLocation;
+	NewBlock->SetGridCoord(GridCoord);
+	NewBlock->SetGridLocation(WorldLocation);
 	NewBlock->SetActorScale3D(FVector(BlocksScale, BlocksScale, BlocksScale));
 	NewBlock->SetScore(startingScore);
 
 	// Tell the block about its owner
 	if (NewBlock != nullptr)
 	{
-		NewBlock->OwningGrid = this;
+		NewBlock->SetOwningGrid(this);
 	}
 
 	NewBlock->SetBlockType(BlockType);
@@ -263,53 +267,46 @@ void AColourWarsBlockGrid::RemoveBlock(AColourWarsBlock* BlockToRemove)
 /// <returns></returns>
 eMoveType AColourWarsBlockGrid::MoveBlock(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock)
 {
-	try
-	{
-		// If blocks are not neighbours then don't move the block
-		if (!AreBlocksNeighbours(StartingBlock, EndingBlock) || !IsValidMove(StartingBlock, EndingBlock))
-		{
-			return eMoveType::Invalid;
-		}
-
-		eMoveType moveType = eMoveType::Invalid;
-
-		// If blocks are same type then move score over to ending block
-		if (StartingBlock->BlockType == EndingBlock->BlockType)
-		{
-			EndingBlock->AddScore(StartingBlock->Score);
-			StartingBlock->SetScore(0);
-			moveType = eMoveType::Defensive;
-		}
-		else
-		{
-			int32 const attackingCost = StartingBlock->AttackingCost(EndingBlock);
-			EndingBlock->SetScore(StartingBlock->Score - attackingCost);
-			StartingBlock->SetScore(0);
-			EndingBlock->SetBlockType(StartingBlock->BlockType);
-			if (EndingBlock->bIsCapitalBlock)
-			{
-				EndingBlock->UnsetCapitalBlock();
-			}
-			moveType = eMoveType::Attacking;
-			EndingBlock->BonusCheck();
-		}
-
-		// Add a score to the starting block
-		StartingBlock->AddScore(1);
-
-		// Move capital status if this block is capital block
-		if (StartingBlock->bIsCapitalBlock)
-		{
-			StartingBlock->UnsetCapitalBlock();
-			EndingBlock->SetCapitalBlock();
-		}
-
-		return moveType;
-	}
-	catch (...)
+	// If blocks are not neighbours then don't move the block
+	if (!AreBlocksNeighbours(StartingBlock, EndingBlock) || !IsValidMove(StartingBlock, EndingBlock))
 	{
 		return eMoveType::Invalid;
 	}
+
+	eMoveType moveType = eMoveType::Invalid;
+
+	// If blocks are same type then move score over to ending block
+	if (StartingBlock->GetBlockType() == EndingBlock->GetBlockType())
+	{
+		EndingBlock->AddScore(StartingBlock->GetScore());
+		StartingBlock->SetScore(0);
+		moveType = eMoveType::Move;
+	}
+	else
+	{
+		int32 const attackingCost = StartingBlock->AttackingCost(EndingBlock);
+		EndingBlock->SetScore(StartingBlock->GetScore() - attackingCost);
+		StartingBlock->SetScore(0);
+		EndingBlock->SetBlockType(StartingBlock->GetBlockType());
+		if (EndingBlock->IsCapitalBlock())
+		{
+			EndingBlock->UnsetCapitalBlock();
+		}
+		moveType = eMoveType::Attack;
+		EndingBlock->BonusCheck();
+	}
+
+	// Add a score to the starting block
+	StartingBlock->AddScore(1);
+
+	// Move capital status if this block is capital block
+	if (StartingBlock->IsCapitalBlock())
+	{
+		StartingBlock->UnsetCapitalBlock();
+		EndingBlock->SetCapitalBlock();
+	}
+
+	return moveType;
 }
 
 /// <summary>
@@ -320,14 +317,14 @@ eMoveType AColourWarsBlockGrid::MoveBlock(AColourWarsBlock* StartingBlock, AColo
 /// <returns></returns>
 bool AColourWarsBlockGrid::IsValidMove(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock)
 {
-	if (StartingBlock->BlockType == EndingBlock->BlockType)
+	if (StartingBlock->GetBlockType() == EndingBlock->GetBlockType())
 	{
 		return true;
 	}
 	else
 	{
 		// Check if the 'attacking' block has enough score to 'take' the other block
-		if (StartingBlock->CanDefeat(EndingBlock))
+		if (CanDefeat(StartingBlock, EndingBlock))
 		{
 			return true;
 		}
@@ -342,7 +339,7 @@ bool AColourWarsBlockGrid::HasBlocks(eBlockType BlockType)
 	{
 		AColourWarsBlock* block = Blocks[BlockIndex];
 
-		if (block->BlockType == BlockType)
+		if (block->GetBlockType() == BlockType)
 		{
 			return true;
 		}
@@ -359,8 +356,8 @@ bool AColourWarsBlockGrid::HasBlocks(eBlockType BlockType)
 /// <returns></returns>
 bool AColourWarsBlockGrid::AreBlocksNeighbours(AColourWarsBlock* Block1, AColourWarsBlock* Block2)
 {
-	int32 const Xdiff = abs(Block1->GridCoord.X - Block2->GridCoord.X);
-	int32 const Ydiff = abs(Block1->GridCoord.Y - Block2->GridCoord.Y);
+	int32 const Xdiff = abs(Block1->GetGridCoord().X - Block2->GetGridCoord().X);
+	int32 const Ydiff = abs(Block1->GetGridCoord().Y - Block2->GetGridCoord().Y);
 
 	return Xdiff == 1 || Ydiff == 1;
 }
@@ -385,9 +382,9 @@ int32 AColourWarsBlockGrid::GetGameGridSize()
 /// </summary>
 /// <param name="Index"></param>
 /// <returns></returns>
-GridCoord AColourWarsBlockGrid::ToGridCoord(int Index)
+IntVector AColourWarsBlockGrid::ToGridCoord(int Index)
 {
-	GridCoord gridCoord = GridCoord(Index % GameInstance->GameGridSize, std::floor((double)(Index / GameInstance->GameGridSize)));
+	IntVector gridCoord = IntVector(Index % GameInstance->GameGridSize, std::floor((double)(Index / GameInstance->GameGridSize)));
 
 	return gridCoord;
 }
@@ -397,7 +394,7 @@ GridCoord AColourWarsBlockGrid::ToGridCoord(int Index)
 /// </summary>
 /// <param name="GridCoord"></param>
 /// <returns></returns>
-int AColourWarsBlockGrid::ToGridIndex(GridCoord GridCoord)
+int AColourWarsBlockGrid::ToGridIndex(IntVector GridCoord)
 {
 	return (GridCoord.X * GameInstance->GameGridSize) + GridCoord.Y;
 }
@@ -411,37 +408,130 @@ TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* 
 {
 	TArray<AColourWarsBlock*> neighbours;
 
-	GridCoord newGridCoord = GridCoord(0, 0);
+	IntVector newGridCoord = IntVector(0, 0);
 
-	if (CentralBlock->GridCoord.X > 0)
+	if (CentralBlock->GetGridCoord().X > 0)
 	{
-		newGridCoord = CentralBlock->GridCoord;
-		newGridCoord.X = CentralBlock->GridCoord.X - 1;
+		newGridCoord = CentralBlock->GetGridCoord();
+		newGridCoord.X = CentralBlock->GetGridCoord().X - 1;
 		neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
 	}
 
-	if (CentralBlock->GridCoord.X < Size - 1)
+	if (CentralBlock->GetGridCoord().X < Size - 1)
 	{
-		newGridCoord = CentralBlock->GridCoord;
-		newGridCoord.X = CentralBlock->GridCoord.X + 1;
+		newGridCoord = CentralBlock->GetGridCoord();
+		newGridCoord.X = CentralBlock->GetGridCoord().X + 1;
 		neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
 	}
 	
-	if (CentralBlock->GridCoord.Y > 0)
+	if (CentralBlock->GetGridCoord().Y > 0)
 	{
-		newGridCoord = CentralBlock->GridCoord;
-		newGridCoord.Y = CentralBlock->GridCoord.Y - 1;
+		newGridCoord = CentralBlock->GetGridCoord();
+		newGridCoord.Y = CentralBlock->GetGridCoord().Y - 1;
 		neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
 	}
 
-	if (CentralBlock->GridCoord.Y < Size - 1)
+	if (CentralBlock->GetGridCoord().Y < Size - 1)
 	{
-		newGridCoord = CentralBlock->GridCoord;
-		newGridCoord.Y = CentralBlock->GridCoord.Y + 1;
+		newGridCoord = CentralBlock->GetGridCoord();
+		newGridCoord.Y = CentralBlock->GetGridCoord().Y + 1;
 		neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
 	}
 
 	return neighbours;
+}
+
+void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, AColourWarsBlock* SelectedBlock)
+{
+	UnsetAllSelectableBlocks();
+
+	if (GameMode->GetGameState()->GetSelectedBlock() == nullptr)
+	{
+		for (AColourWarsBlock* block : Blocks)
+		{
+			if (block->GetBlockType() == GameMode->GetGameState()->GetCurrentPlayer())
+			{
+				block->SetBlockSelectable(true);
+			}
+		}
+	}
+	else
+	{
+		switch (MoveType)
+		{
+			case eMoveType::Attack:
+
+				for (AColourWarsBlock* neighbourBlock : GameMode->GetGameState()->GetGameGrid()->GetNeighbours(GameMode->GetGameState()->GetSelectedBlock()))
+				{
+					if (neighbourBlock->GetBlockType() != GameMode->GetGameState()->GetCurrentPlayer()
+						&& GameMode->GetGameState()->GetSelectedBlock()->AttackingCost(neighbourBlock) < GameMode->GetGameState()->GetSelectedBlock()->GetScore())
+					{
+						neighbourBlock->SetBlockSelectable(true);
+					}
+				}
+
+				break;
+			
+			default:
+
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Selectable Blocks not set as no valid MoveType has been selected."));
+
+				break;
+		}
+	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Selectable blocks set."));
+}
+
+void AColourWarsBlockGrid::UnsetAllSelectableBlocks()
+{
+	for (AColourWarsBlock* block : Blocks)
+	{
+		block->SetBlockSelectable(false);
+	}
+}
+
+void AColourWarsBlockGrid::SetPlayerTurnMeshColour()
+{
+	PlayerTurnMesh->SetVectorParameterValueOnMaterials("Colour", AColourWarsBlock::BlockColours[GameMode->GetGameState()->GetCurrentPlayer()]);
+}
+
+/// <summary>
+/// Check if this block can take the defending block
+/// </summary>
+/// <param name="DefendingBlock"></param>
+/// <returns></returns>
+bool AColourWarsBlockGrid::CanDefeat(AColourWarsBlock* AttackingBlock, AColourWarsBlock* DefendingBlock)
+{
+	if (AttackingBlock->GetScore() > AttackingBlock->AttackingCost(DefendingBlock))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+/// <summary>
+/// Is the move for this block to take the other block valid?
+/// </summary>
+/// <param name="OtherBlock"></param>
+/// <returns></returns>
+bool AColourWarsBlockGrid::ValidMove(AColourWarsBlock* Block, AColourWarsBlock* OtherBlock)
+{
+	if (Block->GetBlockType() == Block->GetBlockType())
+	{
+		return true;
+	}
+	else
+	{
+		// Check if the 'attacking' block has enough score to 'take' the other block
+		if (CanDefeat(OtherBlock, Block))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 #undef LOCTEXT_NAMESPACE
