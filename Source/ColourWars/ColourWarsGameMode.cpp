@@ -120,7 +120,7 @@ void AColourWarsGameMode::BeginGame()
 
 	GameState->DeselectAllBlocks();
 
-	GameState->SetSelectedMove(eMoveType::Invalid);
+	GameState->SetSelectedMove(eMoveType::Move);
 
 	GameState->RefreshGameGrid();
 }

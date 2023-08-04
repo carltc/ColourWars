@@ -9,7 +9,7 @@ const TMap<eMoveType, int32> AColourWarsGameState::NumberBlocksRequired
 	{eMoveType::AddOne  , 1 },
 	{eMoveType::Attack  , 2 },
 	{eMoveType::Move    , 2 },
-	{eMoveType::Combine , 2 }
+	{eMoveType::Combine , 1 }
 };
 
 AColourWarsGameState::AColourWarsGameState()
@@ -48,7 +48,7 @@ void AColourWarsGameState::SetSelectedMove(eMoveType MoveType)
 
 void AColourWarsGameState::UnsetSelectedMove()
 {
-	SelectedMove = eMoveType::Invalid;
+	SelectedMove = eMoveType::Move;
 	GameGrid->SetSelectableBlocks(SelectedMove, SelectedBlocks);
 }
 
@@ -156,20 +156,22 @@ void AColourWarsGameState::RefreshGameGrid()
 void AColourWarsGameState::MakeMove()
 {
 	if (MoveIsValid())
-	switch (SelectedMove)
 	{
-		case eMoveType::AddOne:
-			SelectedBlocks[0]->IncreaseThisBlock();
-			break;
-		case eMoveType::Attack:
-			GetGameGrid()->MoveBlock(SelectedBlocks[0], SelectedBlocks[1]);
-			break;
-		case eMoveType::Move:
-			GetGameGrid()->MoveBlock(SelectedBlocks[0], SelectedBlocks[1]);
-			break;
-		case eMoveType::Combine:
-			SelectedBlocks[0]->CombineNeighbourBlocks();
-			break;
+		switch (SelectedMove)
+		{
+			case eMoveType::AddOne:
+				GetGameGrid()->AddOneToBlock(SelectedBlocks[0]);
+				break;
+			case eMoveType::Attack:
+				GetGameGrid()->MoveBlock(SelectedBlocks[0], SelectedBlocks[1]);
+				break;
+			case eMoveType::Move:
+				GetGameGrid()->MoveBlock(SelectedBlocks[0], SelectedBlocks[1]);
+				break;
+			case eMoveType::Combine:
+				GetGameGrid()->CombineNeighbourBlocks(SelectedBlocks[0]);
+				break;
+		}
 	}
 }
 

@@ -310,6 +310,31 @@ eMoveType AColourWarsBlockGrid::MoveBlock(AColourWarsBlock* StartingBlock, AColo
 }
 
 /// <summary>
+/// Increase the score of this block based by 1
+/// </summary>
+void AColourWarsBlockGrid::AddOneToBlock(AColourWarsBlock* block)
+{
+	// Add 1 score as part of this move
+	block->AddScore(1);
+}
+
+/// <summary>
+/// Combine all of the scores of neighbour blocks into this block
+/// </summary>
+void AColourWarsBlockGrid::CombineNeighbourBlocks(AColourWarsBlock* block)
+{
+	for (AColourWarsBlock* neighbourBlock : GetNeighbours(block, true))
+	{
+		// Check if this block type is the same type
+		if (block->GetBlockType() == block->GetBlockType() && neighbourBlock->GetScore() > 1)
+		{
+			block->AddScore(neighbourBlock->GetScore() - 1);
+			neighbourBlock->SetScore(1);
+		}
+	}
+}
+
+/// <summary>
 /// Is the move for this block to take the other block valid?
 /// </summary>
 /// <param name="StartingBlock"></param>
@@ -404,7 +429,7 @@ int AColourWarsBlockGrid::ToGridIndex(IntVector GridCoord)
 /// </summary>
 /// <param name="CentralBlock"></param>
 /// <returns></returns>
-TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* CentralBlock)
+TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* CentralBlock, bool diagonals)
 {
 	TArray<AColourWarsBlock*> neighbours;
 
@@ -438,6 +463,41 @@ TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* 
 		neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
 	}
 
+	if (diagonals)
+	{
+		if (CentralBlock->GetGridCoord().X > 0 && CentralBlock->GetGridCoord().Y > 0)
+		{
+			newGridCoord = CentralBlock->GetGridCoord();
+			newGridCoord.X = CentralBlock->GetGridCoord().X - 1;
+			newGridCoord.X = CentralBlock->GetGridCoord().Y - 1;
+			neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
+		}
+
+		if (CentralBlock->GetGridCoord().X < Size - 1 && CentralBlock->GetGridCoord().Y < Size - 1)
+		{
+			newGridCoord = CentralBlock->GetGridCoord();
+			newGridCoord.X = CentralBlock->GetGridCoord().X + 1;
+			newGridCoord.X = CentralBlock->GetGridCoord().Y + 1;
+			neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
+		}
+
+		if (CentralBlock->GetGridCoord().X < Size - 1 && CentralBlock->GetGridCoord().Y > 0)
+		{
+			newGridCoord = CentralBlock->GetGridCoord();
+			newGridCoord.Y = CentralBlock->GetGridCoord().X + 1;
+			newGridCoord.Y = CentralBlock->GetGridCoord().Y - 1;
+			neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
+		}
+
+		if (CentralBlock->GetGridCoord().X > 0 && CentralBlock->GetGridCoord().Y < Size - 1)
+		{
+			newGridCoord = CentralBlock->GetGridCoord();
+			newGridCoord.Y = CentralBlock->GetGridCoord().X - 1;
+			newGridCoord.Y = CentralBlock->GetGridCoord().Y + 1;
+			neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
+		}
+	}
+
 	return neighbours;
 }
 
@@ -462,7 +522,7 @@ void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, TArray<AColou
 		{
 			case eMoveType::Attack:
 
-				for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0]))
+				for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0], false))
 				{
 					if (neighbourBlock->GetBlockType() != GameMode->GetGameState()->GetCurrentPlayer()
 						&& SelectedBlocks[0]->AttackingCost(neighbourBlock) < SelectedBlocks[0]->GetScore())
@@ -474,9 +534,15 @@ void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, TArray<AColou
 
 			case eMoveType::Move:
 
-				for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0]))
+				for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0], false))
 				{
 					if (neighbourBlock->GetBlockType() == GameMode->GetGameState()->GetCurrentPlayer())
+					{
+						neighbourBlock->SetBlockSelectable(true);
+					}
+
+					if (neighbourBlock->GetBlockType() != GameMode->GetGameState()->GetCurrentPlayer()
+						&& SelectedBlocks[0]->AttackingCost(neighbourBlock) < SelectedBlocks[0]->GetScore())
 					{
 						neighbourBlock->SetBlockSelectable(true);
 					}

@@ -83,6 +83,10 @@ public:
 	/** Move the StartingBlock onto the EndingBlock */
 	eMoveType MoveBlock(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock);
 
+	void CombineNeighbourBlocks(AColourWarsBlock* block);
+
+	void AddOneToBlock(AColourWarsBlock* block);
+
 	/** Check if player has blocks left */
 	bool HasBlocks(eBlockType BlockType);
 
@@ -109,7 +113,7 @@ public:
 	bool ValidMove(AColourWarsBlock* Block, AColourWarsBlock* OtherBlock);
 
 	/** Get all neighbour blocks to the central block */
-	TArray<AColourWarsBlock*> GetNeighbours(AColourWarsBlock* CentralBlock);
+	TArray<AColourWarsBlock*> GetNeighbours(AColourWarsBlock* CentralBlock, bool diagonals);
 
 	UFUNCTION(BlueprintCallable)
 		int32 GetGameGridSize();

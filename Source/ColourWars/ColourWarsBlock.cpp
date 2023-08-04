@@ -167,42 +167,6 @@ void AColourWarsBlock::HandleClicked()
 }
 
 /// <summary>
-/// Increase the score of this block based by 1
-/// </summary>
-void AColourWarsBlock::IncreaseThisBlock()
-{
-	// Add 1 score as part of this move
-	this->AddScore(1);
-}
-
-/// <summary>
-/// Combine all of the scores of neighbour blocks into this block
-/// </summary>
-void AColourWarsBlock::CombineNeighbourBlocks()
-{
-	bool moveMade = false;
-
-	// Find all neighbouring blocks
-	TSet<AActor*> OverlappingActors;
-	this->GetOverlappingActors(OverlappingActors);
-
-	for (AActor* actor : OverlappingActors)
-	{
-		AColourWarsBlock* block = Cast<AColourWarsBlock>(actor);
-		if (block != nullptr)
-		{
-			// Check if this block type is the same type
-			if (block->BlockType == this->BlockType && block->Score > 1)
-			{
-				this->AddScore(block->Score - 1);
-				block->SetScore(1);
-				moveMade = true;
-			}
-		}
-	}
-}
-
-/// <summary>
 /// Check if this block has created a square of same blocks and if so apply a completion bonus
 /// </summary>
 void AColourWarsBlock::BonusCheck()
@@ -413,7 +377,7 @@ void AColourWarsBlock::SetOwningGrid(AColourWarsBlockGrid* grid)
 /// </summary>
 void AColourWarsBlock::ApplyCapitalBlockBonus()
 {
-	TArray<AColourWarsBlock*> neighbours = OwningGrid->GetNeighbours(this);
+	TArray<AColourWarsBlock*> neighbours = OwningGrid->GetNeighbours(this, false);
 
 	for (int32 blockIndex = 0; blockIndex < neighbours.Num(); blockIndex++)
 	{

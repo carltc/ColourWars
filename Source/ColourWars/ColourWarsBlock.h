@@ -164,12 +164,6 @@ public:
 
 	void SetOwningGrid(AColourWarsBlockGrid* grid);
 
-	UFUNCTION(BlueprintCallable)
-		void IncreaseThisBlock();
-
-	UFUNCTION(BlueprintCallable)
-		void CombineNeighbourBlocks();
-
 	void ApplyCapitalBlockBonus();
 
 	void BonusCheck();

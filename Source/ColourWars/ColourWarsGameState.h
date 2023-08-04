@@ -77,7 +77,7 @@ public:
 
 	void MakeMove();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BluePrintPure)
 		bool MoveIsValid();
 
 };
