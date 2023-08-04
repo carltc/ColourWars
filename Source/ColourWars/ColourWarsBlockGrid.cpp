@@ -212,7 +212,7 @@ void AColourWarsBlockGrid::ApplyCapitalBlocksBonus()
 {
 	for (int32 blockIndex = 0; blockIndex < Blocks.Num(); blockIndex++)
 	{
-		if (Blocks[blockIndex]->IsCapitalBlock() && Blocks[blockIndex]->GetBlockType() == GameMode->GetGameState()->GetSelectedBlock()->GetBlockType())
+		if (Blocks[blockIndex]->IsCapitalBlock() && Blocks[blockIndex]->GetBlockType() == GameMode->GetGameState()->GetCurrentPlayer())
 		{
 			Blocks[blockIndex]->ApplyCapitalBlockBonus();
 		}
@@ -441,11 +441,12 @@ TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* 
 	return neighbours;
 }
 
-void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, AColourWarsBlock* SelectedBlock)
+void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, TArray<AColourWarsBlock*> SelectedBlocks)
 {
 	UnsetAllSelectableBlocks();
 
-	if (GameMode->GetGameState()->GetSelectedBlock() == nullptr)
+	// If no blocks selected then just allow all blocks of the player to be selected
+	if (GameMode->GetGameState()->NumberBlocksSelected() == 0)
 	{
 		for (AColourWarsBlock* block : Blocks)
 		{
@@ -461,17 +462,33 @@ void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, AColourWarsBl
 		{
 			case eMoveType::Attack:
 
-				for (AColourWarsBlock* neighbourBlock : GameMode->GetGameState()->GetGameGrid()->GetNeighbours(GameMode->GetGameState()->GetSelectedBlock()))
+				for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0]))
 				{
 					if (neighbourBlock->GetBlockType() != GameMode->GetGameState()->GetCurrentPlayer()
-						&& GameMode->GetGameState()->GetSelectedBlock()->AttackingCost(neighbourBlock) < GameMode->GetGameState()->GetSelectedBlock()->GetScore())
+						&& SelectedBlocks[0]->AttackingCost(neighbourBlock) < SelectedBlocks[0]->GetScore())
 					{
 						neighbourBlock->SetBlockSelectable(true);
 					}
 				}
+				break;
 
+			case eMoveType::Move:
+
+				for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0]))
+				{
+					if (neighbourBlock->GetBlockType() == GameMode->GetGameState()->GetCurrentPlayer())
+					{
+						neighbourBlock->SetBlockSelectable(true);
+					}
+				}
 				break;
 			
+			case eMoveType::Invalid:
+			case eMoveType::Combine:
+			case eMoveType::AddOne:
+				// In these case don't select any more blocks as they don't need it
+				break;
+
 			default:
 
 				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Selectable Blocks not set as no valid MoveType has been selected."));

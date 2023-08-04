@@ -173,9 +173,6 @@ void AColourWarsBlock::IncreaseThisBlock()
 {
 	// Add 1 score as part of this move
 	this->AddScore(1);
-
-	// Set gamemode to next player turn
-	GameMode->NextTurn();
 }
 
 /// <summary>
@@ -202,12 +199,6 @@ void AColourWarsBlock::CombineNeighbourBlocks()
 				moveMade = true;
 			}
 		}
-	}
-
-	if (moveMade)
-	{
-		// Set gamemode to next player turn
-		GameMode->NextTurn();
 	}
 }
 

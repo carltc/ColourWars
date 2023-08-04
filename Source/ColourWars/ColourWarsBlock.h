@@ -113,12 +113,6 @@ private:
 	UFUNCTION()
 	void OnFingerPressedBlock(ETouchIndex::Type FingerIndex, UPrimitiveComponent* TouchedComponent);
 	
-	UFUNCTION(BlueprintCallable)
-		void IncreaseThisBlock();
-	
-	UFUNCTION(BlueprintCallable)
-		void CombineNeighbourBlocks();
-
 	void HandleClicked();
 
 	/** Array of all blocks in grid */
@@ -169,6 +163,12 @@ public:
 	AColourWarsBlockGrid* GetOwningGrid();
 
 	void SetOwningGrid(AColourWarsBlockGrid* grid);
+
+	UFUNCTION(BlueprintCallable)
+		void IncreaseThisBlock();
+
+	UFUNCTION(BlueprintCallable)
+		void CombineNeighbourBlocks();
 
 	void ApplyCapitalBlockBonus();
 

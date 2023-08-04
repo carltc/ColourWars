@@ -98,7 +98,7 @@ public:
 	/** Convert an index value to a grid coordinate */
 	int ToGridIndex(IntVector GridCoord);
 
-	void SetSelectableBlocks(eMoveType MoveType, AColourWarsBlock* SelectedBlock);
+	void SetSelectableBlocks(eMoveType MoveType, TArray<AColourWarsBlock*> SelectedBlocks);
 
 	void UnsetAllSelectableBlocks();
 

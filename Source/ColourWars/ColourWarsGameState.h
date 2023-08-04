@@ -25,9 +25,7 @@ private:
 
 	eMoveType SelectedMove;
 
-	AColourWarsBlock* SelectedBlock;
-	
-	AColourWarsBlock* SecondarySelectedBlock;
+	TArray<AColourWarsBlock*> SelectedBlocks;
 
 	eBlockType CurrentPlayer = eBlockType::Red;
 
@@ -38,11 +36,16 @@ private:
 
 public:
 
+	const static TMap<eMoveType, int32> NumberBlocksRequired;
+
 	AColourWarsGameState();
 
 	void SetGameGrid(AColourWarsBlockGrid* grid);
 
 	AColourWarsBlockGrid* GetGameGrid();
+
+	UFUNCTION(BluePrintCallable, BluePrintPure)
+		eMoveType GetSelectedMove();
 
 	void SetSelectedMove(eMoveType MoveType);
 
@@ -50,15 +53,17 @@ public:
 
 	bool IsMoveSelected();
 
+	int32 NumberBlocksSelected();
+
 	void SelectBlock(AColourWarsBlock* block);
 
 	void DeselectBlock(AColourWarsBlock* block);
 
 	void DeselectAllBlocks();
 
-	AColourWarsBlock* GetSelectedBlock();
+	TArray<AColourWarsBlock*> GetSelectedBlocks();
 
-	bool IsBlockSelected();
+	bool CorrectNumberBlocksSelected();
 
 	void SetCurrentPlayer(eBlockType blockType);
 
@@ -71,5 +76,8 @@ public:
 	void RefreshGameGrid();
 
 	void MakeMove();
+
+	UFUNCTION(BlueprintCallable)
+		bool MoveIsValid();
 
 };
