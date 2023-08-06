@@ -34,6 +34,8 @@ private:
 
 	bool GameOver = false;
 
+	void SelectBlock(AColourWarsBlock* block);
+
 public:
 
 	const static TMap<eMoveType, int32> NumberBlocksRequired;
@@ -55,7 +57,7 @@ public:
 
 	int32 NumberBlocksSelected();
 
-	void SelectBlock(AColourWarsBlock* block);
+	void ToggleBlockSelection(AColourWarsBlock* block);
 
 	void DeselectBlock(AColourWarsBlock* block);
 

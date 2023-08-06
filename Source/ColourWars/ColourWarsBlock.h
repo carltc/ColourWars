@@ -31,7 +31,6 @@ UENUM(BlueprintType)
 enum class eMoveType : uint8
 {
 	Invalid     UMETA(DisplayName = "Invalid"),
-	Attack      UMETA(DisplayName = "Attack"),
 	Move        UMETA(DisplayName = "Move"),
 	Combine     UMETA(DisplayName = "Combine"),
 	AddOne      UMETA(DisplayName = "AddOne")
@@ -119,16 +118,18 @@ private:
 	TArray<AColourWarsBlock*> NeighbouringBlocks;
 
 	void SetBlockColour();
+	
+	void SetBlockTextColour(FVector colour);
+
+	void SetBlockTextGreen();
+
+	void SetBlockTextRed();
+
+	void SetBlockTextWhite();
 
 public:
 
 	const static TMap<eBlockType, FVector> BlockColours;
-
-	/** Attempts to select this block via the GameState */
-	void TrySelect();
-
-	/** Attempts to select this block via the GameState */
-	void TryDeselect();
 
 	/** Set this block as selected */
 	void SetBlockSelected();
@@ -177,6 +178,7 @@ public:
 	/** Returns BlockMesh subobject **/
 	FORCEINLINE class UStaticMeshComponent* GetBlockMesh() const { return BlockMesh; }
 
+	void SetBlockScoreText(int32 score);
 };
 
 

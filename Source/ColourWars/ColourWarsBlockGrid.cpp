@@ -223,7 +223,7 @@ void AColourWarsBlockGrid::DeselectAllBlocks()
 {
 	for (AColourWarsBlock* block : Blocks)
 	{
-		block->TryDeselect();
+		GameMode->GetGameState()->DeselectBlock(block);
 	}
 }
 
@@ -265,22 +265,19 @@ void AColourWarsBlockGrid::RemoveBlock(AColourWarsBlock* BlockToRemove)
 /// <param name="StartingBlock"></param>
 /// <param name="EndingBlock"></param>
 /// <returns></returns>
-eMoveType AColourWarsBlockGrid::MoveBlock(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock)
+void AColourWarsBlockGrid::MoveBlock(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock)
 {
-	// If blocks are not neighbours then don't move the block
-	if (!AreBlocksNeighbours(StartingBlock, EndingBlock) || !IsValidMove(StartingBlock, EndingBlock))
-	{
-		return eMoveType::Invalid;
-	}
-
-	eMoveType moveType = eMoveType::Invalid;
+	//// If blocks are not neighbours then don't move the block
+	//if (!AreBlocksNeighbours(StartingBlock, EndingBlock) || !IsValidMove(StartingBlock, EndingBlock))
+	//{
+	//	return;
+	//}
 
 	// If blocks are same type then move score over to ending block
 	if (StartingBlock->GetBlockType() == EndingBlock->GetBlockType())
 	{
 		EndingBlock->AddScore(StartingBlock->GetScore());
 		StartingBlock->SetScore(0);
-		moveType = eMoveType::Move;
 	}
 	else
 	{
@@ -292,7 +289,6 @@ eMoveType AColourWarsBlockGrid::MoveBlock(AColourWarsBlock* StartingBlock, AColo
 		{
 			EndingBlock->UnsetCapitalBlock();
 		}
-		moveType = eMoveType::Attack;
 		EndingBlock->BonusCheck();
 	}
 
@@ -305,8 +301,6 @@ eMoveType AColourWarsBlockGrid::MoveBlock(AColourWarsBlock* StartingBlock, AColo
 		StartingBlock->UnsetCapitalBlock();
 		EndingBlock->SetCapitalBlock();
 	}
-
-	return moveType;
 }
 
 /// <summary>
@@ -513,6 +507,7 @@ void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, TArray<AColou
 			if (block->GetBlockType() == GameMode->GetGameState()->GetCurrentPlayer())
 			{
 				block->SetBlockSelectable(true);
+				block->SetBlockScoreText(block->GetScore());
 			}
 		}
 	}
@@ -520,18 +515,6 @@ void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, TArray<AColou
 	{
 		switch (MoveType)
 		{
-			case eMoveType::Attack:
-
-				for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0], false))
-				{
-					if (neighbourBlock->GetBlockType() != GameMode->GetGameState()->GetCurrentPlayer()
-						&& SelectedBlocks[0]->AttackingCost(neighbourBlock) < SelectedBlocks[0]->GetScore())
-					{
-						neighbourBlock->SetBlockSelectable(true);
-					}
-				}
-				break;
-
 			case eMoveType::Move:
 
 				for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0], false))
@@ -539,14 +522,20 @@ void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, TArray<AColou
 					if (neighbourBlock->GetBlockType() == GameMode->GetGameState()->GetCurrentPlayer())
 					{
 						neighbourBlock->SetBlockSelectable(true);
+						neighbourBlock->SetBlockScoreText(neighbourBlock->GetScore() + SelectedBlocks[0]->GetScore());
 					}
 
 					if (neighbourBlock->GetBlockType() != GameMode->GetGameState()->GetCurrentPlayer()
 						&& SelectedBlocks[0]->AttackingCost(neighbourBlock) < SelectedBlocks[0]->GetScore())
 					{
 						neighbourBlock->SetBlockSelectable(true);
+						neighbourBlock->SetBlockScoreText(SelectedBlocks[0]->GetScore() - SelectedBlocks[0]->AttackingCost(neighbourBlock));
 					}
 				}
+
+				SelectedBlocks[0]->SetBlockSelectable(true);
+				SelectedBlocks[0]->SetBlockScoreText(1);
+
 				break;
 			
 			case eMoveType::Invalid:
@@ -571,6 +560,7 @@ void AColourWarsBlockGrid::UnsetAllSelectableBlocks()
 	for (AColourWarsBlock* block : Blocks)
 	{
 		block->SetBlockSelectable(false);
+		block->SetBlockScoreText(block->GetScore());
 	}
 }
 

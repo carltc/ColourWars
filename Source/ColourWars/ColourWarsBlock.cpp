@@ -156,14 +156,7 @@ void AColourWarsBlock::HandleClicked()
 		return;
 	}
 
-	if (bIsSelected)
-	{
-		this->TryDeselect();
-	}
-	else
-	{
-		this->TrySelect();
-	}
+	GameMode->GetGameState()->ToggleBlockSelection(this);
 }
 
 /// <summary>
@@ -248,22 +241,6 @@ void AColourWarsBlock::BonusCheck()
 	// Reset the collision box back to the centre and normal size
 	this->NeighbourCheck_CollisionBox->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
 	this->NeighbourCheck_CollisionBox->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-}
-
-/// <summary>
-/// Select this block
-/// </summary>
-void AColourWarsBlock::TrySelect()
-{
-	GameMode->GetGameState()->SelectBlock(this);
-}
-
-/// <summary>
-/// Attempt to deselect this block via GameState
-/// </summary>
-void AColourWarsBlock::TryDeselect()
-{
-	GameMode->GetGameState()->DeselectBlock(this);
 }
 
 /// <summary>
@@ -476,6 +453,45 @@ void AColourWarsBlock::SetBlockSelectable(bool Selectable)
 void AColourWarsBlock::SetBlockColour()
 {
 	BlockMesh->SetVectorParameterValueOnMaterials("Colour", BlockColours[BlockType]);
+}
+
+void AColourWarsBlock::SetBlockTextColour(FVector colour)
+{
+	TextMaterial->SetVectorParameterValue("Colour", colour);
+}
+
+void AColourWarsBlock::SetBlockTextGreen()
+{
+	SetBlockTextColour(FVector(0, 0.5, 0));
+}
+
+void AColourWarsBlock::SetBlockTextRed()
+{
+	SetBlockTextColour(FVector(0.5, 0, 0));
+}
+
+void AColourWarsBlock::SetBlockTextWhite()
+{
+	SetBlockTextColour(FVector(1, 1, 1));
+}
+
+void AColourWarsBlock::SetBlockScoreText(int32 score)
+{
+	ScoreText->SetText(FText::Format(LOCTEXT("ScoreFmt", "{0}"), FText::AsNumber(score)));
+
+	if (score > Score)
+	{
+		SetBlockTextGreen();
+	}
+	else if (score < Score)
+	{
+		SetBlockTextRed();
+	}
+	else
+	{
+		SetBlockTextWhite();
+	}
+
 }
 
 

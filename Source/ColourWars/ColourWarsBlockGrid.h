@@ -81,7 +81,7 @@ public:
 	void RemoveBlock(AColourWarsBlock* BlockToRemove);
 	
 	/** Move the StartingBlock onto the EndingBlock */
-	eMoveType MoveBlock(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock);
+	void MoveBlock(AColourWarsBlock* StartingBlock, AColourWarsBlock* EndingBlock);
 
 	void CombineNeighbourBlocks(AColourWarsBlock* block);
 

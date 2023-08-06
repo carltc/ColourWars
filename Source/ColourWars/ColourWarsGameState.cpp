@@ -7,7 +7,6 @@ const TMap<eMoveType, int32> AColourWarsGameState::NumberBlocksRequired
 {
 	{eMoveType::Invalid , 0 },
 	{eMoveType::AddOne  , 1 },
-	{eMoveType::Attack  , 2 },
 	{eMoveType::Move    , 2 },
 	{eMoveType::Combine , 1 }
 };
@@ -87,7 +86,7 @@ int32 AColourWarsGameState::NumberBlocksSelected()
 	return SelectedBlocks.Num();
 }
 
-void AColourWarsGameState::SelectBlock(AColourWarsBlock* block)
+void AColourWarsGameState::ToggleBlockSelection(AColourWarsBlock* block)
 {
 	// Check if block has already been selected
 	if (SelectedBlocks.Contains(block))
@@ -96,6 +95,12 @@ void AColourWarsGameState::SelectBlock(AColourWarsBlock* block)
 		if (SelectedBlocks.Last() == block)
 		{
 			DeselectBlock(block);
+		}
+		// If it is the first block then reset the selection
+		else if (SelectedBlocks[0] == block)
+		{
+			UnsetSelectedMove();
+			DeselectAllBlocks();
 		}
 		else
 		{
@@ -114,26 +119,31 @@ void AColourWarsGameState::SelectBlock(AColourWarsBlock* block)
 				DeselectBlock(SelectedBlocks.Last());
 			}
 
-			// Add this block to the end of the list
-			SelectedBlocks.Add(block);
-			block->SetBlockSelected();
+			// Select this block
+			SelectBlock(block);
 		}
 		else
 		{
 			// Just set the block as the only selected
 			DeselectAllBlocks();
-			SelectedBlocks.Add(block);
-			block->SetBlockSelected();
+			SelectBlock(block);
 		}
 	}
 
 	GameGrid->SetSelectableBlocks(SelectedMove, SelectedBlocks);
 }
 
+void AColourWarsGameState::SelectBlock(AColourWarsBlock* block)
+{
+	SelectedBlocks.Add(block);
+	block->SetBlockSelected();
+}
+
 void AColourWarsGameState::DeselectBlock(AColourWarsBlock* block)
 {
 	SelectedBlocks.Remove(block);
 	block->SetBlockDeselected();
+	GameGrid->SetSelectableBlocks(SelectedMove, SelectedBlocks);
 }
 
 void AColourWarsGameState::DeselectAllBlocks()
@@ -162,9 +172,6 @@ void AColourWarsGameState::MakeMove()
 			case eMoveType::AddOne:
 				GetGameGrid()->AddOneToBlock(SelectedBlocks[0]);
 				break;
-			case eMoveType::Attack:
-				GetGameGrid()->MoveBlock(SelectedBlocks[0], SelectedBlocks[1]);
-				break;
 			case eMoveType::Move:
 				GetGameGrid()->MoveBlock(SelectedBlocks[0], SelectedBlocks[1]);
 				break;
@@ -182,7 +189,19 @@ bool AColourWarsGameState::MoveIsValid()
 		return false;
 	}
 
-	return SelectedBlocks.Num() >= NumberBlocksRequired[SelectedMove];
+	if (SelectedBlocks.Num() >= NumberBlocksRequired[SelectedMove])
+	{
+		/*switch (SelectedMove)
+		{
+			case eMoveType::Move:
+				SelectedBlocks[0]->SetBlockScoreText(1);
+				break;
+		}*/
+
+		return true;
+	}
+
+	return false;
 }
 
 
