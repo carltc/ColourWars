@@ -85,6 +85,8 @@ public:
 
 	void CombineNeighbourBlocks(AColourWarsBlock* block);
 
+	int32 GetSumNeighboursScores(AColourWarsBlock* centralBlock);
+
 	void AddOneToBlock(AColourWarsBlock* block);
 
 	/** Check if player has blocks left */

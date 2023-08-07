@@ -317,15 +317,35 @@ void AColourWarsBlockGrid::AddOneToBlock(AColourWarsBlock* block)
 /// </summary>
 void AColourWarsBlockGrid::CombineNeighbourBlocks(AColourWarsBlock* block)
 {
+	block->SetScore(GetSumNeighboursScores(block));
+
 	for (AColourWarsBlock* neighbourBlock : GetNeighbours(block, true))
 	{
 		// Check if this block type is the same type
 		if (block->GetBlockType() == block->GetBlockType() && neighbourBlock->GetScore() > 1)
 		{
-			block->AddScore(neighbourBlock->GetScore() - 1);
 			neighbourBlock->SetScore(1);
 		}
 	}
+}
+
+/// <summary>
+/// Get the sum of all neighbour scores and central block
+/// </summary>
+/// <returns></returns>
+int32 AColourWarsBlockGrid::GetSumNeighboursScores(AColourWarsBlock* centralBlock)
+{
+	int32 scoreSum = centralBlock->GetScore();;
+
+	for (AColourWarsBlock* neighbourBlock : GetNeighbours(centralBlock, true))
+	{
+		if (neighbourBlock->GetBlockType() == centralBlock->GetBlockType())
+		{
+			scoreSum += neighbourBlock->GetScore() - 1;
+		}
+	}
+
+	return scoreSum;
 }
 
 /// <summary>
@@ -463,7 +483,7 @@ TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* 
 		{
 			newGridCoord = CentralBlock->GetGridCoord();
 			newGridCoord.X = CentralBlock->GetGridCoord().X - 1;
-			newGridCoord.X = CentralBlock->GetGridCoord().Y - 1;
+			newGridCoord.Y = CentralBlock->GetGridCoord().Y - 1;
 			neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
 		}
 
@@ -471,14 +491,14 @@ TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* 
 		{
 			newGridCoord = CentralBlock->GetGridCoord();
 			newGridCoord.X = CentralBlock->GetGridCoord().X + 1;
-			newGridCoord.X = CentralBlock->GetGridCoord().Y + 1;
+			newGridCoord.Y = CentralBlock->GetGridCoord().Y + 1;
 			neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
 		}
 
 		if (CentralBlock->GetGridCoord().X < Size - 1 && CentralBlock->GetGridCoord().Y > 0)
 		{
 			newGridCoord = CentralBlock->GetGridCoord();
-			newGridCoord.Y = CentralBlock->GetGridCoord().X + 1;
+			newGridCoord.X = CentralBlock->GetGridCoord().X + 1;
 			newGridCoord.Y = CentralBlock->GetGridCoord().Y - 1;
 			neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
 		}
@@ -486,7 +506,7 @@ TArray<AColourWarsBlock*> AColourWarsBlockGrid::GetNeighbours(AColourWarsBlock* 
 		if (CentralBlock->GetGridCoord().X > 0 && CentralBlock->GetGridCoord().Y < Size - 1)
 		{
 			newGridCoord = CentralBlock->GetGridCoord();
-			newGridCoord.Y = CentralBlock->GetGridCoord().X - 1;
+			newGridCoord.X = CentralBlock->GetGridCoord().X - 1;
 			newGridCoord.Y = CentralBlock->GetGridCoord().Y + 1;
 			neighbours.Add(Blocks[ToGridIndex(newGridCoord)]);
 		}
@@ -499,8 +519,10 @@ void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, TArray<AColou
 {
 	UnsetAllSelectableBlocks();
 
+	int32 blocksSelected = GameMode->GetGameState()->NumberBlocksSelected();
+
 	// If no blocks selected then just allow all blocks of the player to be selected
-	if (GameMode->GetGameState()->NumberBlocksSelected() == 0)
+	if (blocksSelected == 0)
 	{
 		for (AColourWarsBlock* block : Blocks)
 		{
@@ -511,31 +533,69 @@ void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, TArray<AColou
 			}
 		}
 	}
-	else
+	else if (blocksSelected == 1)
+	{
+		switch (MoveType)
+		{
+		case eMoveType::Move:
+			for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0], false))
+			{
+				if (neighbourBlock->GetBlockType() == GameMode->GetGameState()->GetCurrentPlayer())
+				{
+					neighbourBlock->SetBlockSelectable(true);
+					neighbourBlock->SetBlockScoreText(neighbourBlock->GetScore() + SelectedBlocks[0]->GetScore());
+				}
+
+				if (neighbourBlock->GetBlockType() != GameMode->GetGameState()->GetCurrentPlayer()
+					&& SelectedBlocks[0]->AttackingCost(neighbourBlock) < SelectedBlocks[0]->GetScore())
+				{
+					neighbourBlock->SetBlockSelectable(true);
+					neighbourBlock->SetBlockScoreText(SelectedBlocks[0]->GetScore() - SelectedBlocks[0]->AttackingCost(neighbourBlock));
+				}
+			}
+			SelectedBlocks[0]->SetBlockSelectable(true);
+			SelectedBlocks[0]->SetBlockScoreText(1);
+			break;
+
+		case eMoveType::Combine:
+			SelectedBlocks[0]->SetBlockSelectable(true);
+			SelectedBlocks[0]->SetBlockScoreText(GetSumNeighboursScores(SelectedBlocks[0]));
+			// Set neighbouring blocks to 1
+			for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0], true))
+			{
+				if (neighbourBlock->GetBlockType() == SelectedBlocks[0]->GetBlockType())
+				{
+					neighbourBlock->SetBlockScoreText(1);
+				}
+			}
+			break;
+
+		case eMoveType::AddOne:
+			SelectedBlocks[0]->SetBlockSelectable(true);
+			SelectedBlocks[0]->SetBlockScoreText(SelectedBlocks[0]->GetScore() + 1);
+			break;
+
+		default:
+			break;
+		}
+	}
+	else if (blocksSelected == 2)
 	{
 		switch (MoveType)
 		{
 			case eMoveType::Move:
-
-				for (AColourWarsBlock* neighbourBlock : GetNeighbours(SelectedBlocks[0], false))
-				{
-					if (neighbourBlock->GetBlockType() == GameMode->GetGameState()->GetCurrentPlayer())
-					{
-						neighbourBlock->SetBlockSelectable(true);
-						neighbourBlock->SetBlockScoreText(neighbourBlock->GetScore() + SelectedBlocks[0]->GetScore());
-					}
-
-					if (neighbourBlock->GetBlockType() != GameMode->GetGameState()->GetCurrentPlayer()
-						&& SelectedBlocks[0]->AttackingCost(neighbourBlock) < SelectedBlocks[0]->GetScore())
-					{
-						neighbourBlock->SetBlockSelectable(true);
-						neighbourBlock->SetBlockScoreText(SelectedBlocks[0]->GetScore() - SelectedBlocks[0]->AttackingCost(neighbourBlock));
-					}
-				}
-
 				SelectedBlocks[0]->SetBlockSelectable(true);
 				SelectedBlocks[0]->SetBlockScoreText(1);
-
+				if (SelectedBlocks[0]->GetBlockType() == SelectedBlocks[1]->GetBlockType())
+				{
+					SelectedBlocks[1]->SetBlockSelectable(true);
+					SelectedBlocks[1]->SetBlockScoreText(SelectedBlocks[0]->GetScore() + SelectedBlocks[1]->GetScore());
+				}
+				else
+				{
+					SelectedBlocks[1]->SetBlockSelectable(true);
+					SelectedBlocks[1]->SetBlockScoreText(SelectedBlocks[0]->GetScore() - SelectedBlocks[1]->GetScore());
+				}
 				break;
 			
 			case eMoveType::Invalid:
@@ -545,9 +605,6 @@ void AColourWarsBlockGrid::SetSelectableBlocks(eMoveType MoveType, TArray<AColou
 				break;
 
 			default:
-
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Selectable Blocks not set as no valid MoveType has been selected."));
-
 				break;
 		}
 	}
