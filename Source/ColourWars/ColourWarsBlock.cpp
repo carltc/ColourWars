@@ -249,13 +249,13 @@ void AColourWarsBlock::BonusCheck()
 void AColourWarsBlock::SetBlockSelected()
 {
 	bIsSelected = true;
-	this->AddActorLocalOffset(FVector(0.f, 0.f, 100.f));
+	UpdateBlockOutlineVisibility();
 }
 
 void AColourWarsBlock::SetBlockDeselected()
 {
 	bIsSelected = false;
-	this->SetActorLocation(GridLocation);
+	UpdateBlockOutlineVisibility();
 }
 
 /// <summary>
@@ -448,6 +448,8 @@ void AColourWarsBlock::SetBlockSelectable(bool Selectable)
 		BlockMesh->SetScalarParameterValueOnMaterials("GreyingOut", 0.5);
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Block set as Unselectable."));
 	}
+
+	UpdateBlockOutlineVisibility();
 }
 
 void AColourWarsBlock::SetBlockColour()
@@ -492,6 +494,29 @@ void AColourWarsBlock::SetBlockScoreText(int32 score)
 		SetBlockTextWhite();
 	}
 
+}
+
+void  AColourWarsBlock::UpdateBlockOutlineVisibility()
+{
+	if (bIsSelected)
+	{
+		SetBlockOutline(true, 3);
+	}
+	else if (bIsSelectable)
+	{
+		SetBlockOutline(true, 2);
+	}
+	else
+	{
+		SetBlockOutline(true, 1);
+	}
+}
+
+void  AColourWarsBlock::SetBlockOutline(bool Visible, int32 state)
+{
+	BlockMesh->bRenderCustomDepth = Visible;
+	BlockMesh->CustomDepthStencilValue = state;
+	BlockMesh->MarkRenderStateDirty();
 }
 
 

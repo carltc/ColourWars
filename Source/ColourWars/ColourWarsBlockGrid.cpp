@@ -322,7 +322,7 @@ void AColourWarsBlockGrid::CombineNeighbourBlocks(AColourWarsBlock* block)
 	for (AColourWarsBlock* neighbourBlock : GetNeighbours(block, true))
 	{
 		// Check if this block type is the same type
-		if (block->GetBlockType() == block->GetBlockType() && neighbourBlock->GetScore() > 1)
+		if (neighbourBlock->GetBlockType() == block->GetBlockType() && neighbourBlock->GetScore() > 1)
 		{
 			neighbourBlock->SetScore(1);
 		}

@@ -21,6 +21,10 @@ class AColourWarsBlockGrid : public AActor
 	/** Text component for the score */
 	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UTextRenderComponent* ScoreText;
+	
+	/** Post Processing Volume for highlighting blocks */
+	UPROPERTY(Category = Grid, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UPostProcessComponent* PostProcessingVolume;
 
 
 public:

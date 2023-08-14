@@ -127,6 +127,10 @@ private:
 
 	void SetBlockTextWhite();
 
+	void UpdateBlockOutlineVisibility();
+
+	void SetBlockOutline(bool Visible, int32 state = 0);
+
 public:
 
 	const static TMap<eBlockType, FVector> BlockColours;
